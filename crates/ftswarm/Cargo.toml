@@ -2,7 +2,7 @@
 name = "ftswarm"
 version = "0.1.0"
 edition = "2021"
-description = "A simple tokio-based swarm protocol communication library"
+description = "A simple async executor agnostic swarm protocol communication library"
 
 [dependencies]
-tokio.workspace = true
+async-task.workspace = true
