@@ -1,4 +1,5 @@
 pub mod command;
+pub mod message_parser;
 
 pub trait IdOf {
     /// Some objects have an ID, this function returns it

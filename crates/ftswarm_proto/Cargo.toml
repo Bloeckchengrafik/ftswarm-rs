@@ -6,3 +6,7 @@ edition = "2021"
 [[example]]
 name = "proto_command"
 path = "examples/proto_command.rs"
+
+[[example]]
+name = "proto_messageparser"
+path = "examples/proto_messageparser.rs"
