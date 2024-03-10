@@ -2,7 +2,6 @@
 name = "ftswarm"
 version = "0.1.0"
 edition = "2021"
-description = "A simple async executor agnostic swarm protocol communication library"
+description = "A simple swarm protocol communication library"
 
 [dependencies]
-async-task.workspace = true
