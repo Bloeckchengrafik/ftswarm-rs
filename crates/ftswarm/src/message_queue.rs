@@ -1,15 +1,20 @@
+use std::collections::HashMap;
+use std::sync::{Arc};
+use tokio::sync::mpsc;
 use ftswarm_proto::message_parser::ReturnMessageType;
+
+type Id = usize;
 
 pub struct ReturnQueue {
     queue: Vec<ReturnMessageType>,
-    watchers: Vec<Box<dyn FnMut(ReturnMessageType)>>
+    funcs: HashMap<Id, Box<dyn Fn(&ReturnMessageType) + Send + 'static>>,
 }
 
 impl ReturnQueue {
     pub fn new() -> Self {
         ReturnQueue {
             queue: Vec::new(),
-            watchers: Vec::new()
+            funcs: HashMap::new(),
         }
     }
 
@@ -19,10 +24,10 @@ impl ReturnQueue {
             return;
         }
 
-        self.queue.push(value);
-
-        for watcher in self.watchers.iter_mut() {
-            watcher(value.clone());
+        self.queue.push(value.clone());
+        for (_, func) in self.funcs.iter() {
+            let fnc = func.clone();
+            fnc(&value);
         }
     }
 
@@ -62,19 +67,22 @@ impl ReturnQueue {
         None
     }
 
-    async fn take_or_wait(&mut self, filter: Box<dyn Fn(&ReturnMessageType) -> bool>) -> ReturnMessageType {
-        if let Some(value) = self.queue.iter().position(|value| filter(value)) {
-            return self.queue.remove(value);
-        }
-
-        let (s, r) = async_channel::bounded(1);
-        self.watchers.push(Box::new(move |value| {
-            if filter(&value) {
-                s.send_blocking(value).ok();
+    async fn take_or_wait(&mut self, filter: Box<dyn Fn(&ReturnMessageType) -> bool + Send + 'static>) -> ReturnMessageType {
+        let (s, mut r) = mpsc::channel(1);
+        let uid = rand::random::<Id>();
+        let sender = Arc::new(s);
+        let sender_for_closure = sender.clone();
+        self.funcs.insert(uid, Box::new(move |value: &ReturnMessageType| {
+            if filter(value) {
+                let s = sender_for_closure.clone();
+                let _ = s.send(value.clone());
             }
         }));
 
-        r.recv().await.unwrap()
+        let _ = r.recv().await.unwrap();
+        // Pop the function we just added
+        self.funcs.remove(&uid);
+        self.queue.pop().unwrap()
     }
 
     async fn take_or_wait_subscription(&mut self) -> ReturnMessageType {

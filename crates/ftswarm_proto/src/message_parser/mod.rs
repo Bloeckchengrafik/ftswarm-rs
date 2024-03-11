@@ -1,6 +1,6 @@
 pub mod rpc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ReturnMessageType {
     Log(String),
     RPCResponse(String),
