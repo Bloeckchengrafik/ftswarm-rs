@@ -52,7 +52,7 @@ to avoid that you are working on something that is already in development.
 
 ## How is ftswarm-rs licensed?
 
-Shoal is licensed under the MIT license. You can find the license text in the file `LICENSE` in the root of the
+ftswarm-rs is licensed under the MIT license. You can find the license text in the file `LICENSE` in the root of the
 repository.
 
 - - -
