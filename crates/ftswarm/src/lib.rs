@@ -6,13 +6,13 @@ use ftswarm_proto::command::direct::FtSwarmDirectCommand;
 use ftswarm_proto::command::FtSwarmCommand;
 use ftswarm_proto::message_parser::ReturnMessageType;
 use ftswarm_proto::Serialized;
+use ftswarm_serial::SwarmSerialPort;
+use ftswarm_serial::serial::SerialCommunication;
 use crate::message_queue::{ReturnQueue, WriteQueue};
-use crate::serial::{SerialCommunication, SwarmSerialPort};
 use crate::swarm_object::SwarmObject;
 
 mod message_queue;
 pub mod swarm_object;
-mod serial;
 
 struct InnerFtSwarm {
     objects: HashMap<String, Box<dyn SwarmObject + Send>>,

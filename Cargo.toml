@@ -3,3 +3,5 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
+tokio = { version = "1", features = ["full"] }
+log = "0.4.21"

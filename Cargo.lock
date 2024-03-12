@@ -88,15 +88,23 @@ name = "ftswarm"
 version = "0.1.0"
 dependencies = [
  "ftswarm_proto",
+ "ftswarm_serial",
  "log",
  "rand",
- "serialport",
  "tokio",
 ]
 
 [[package]]
 name = "ftswarm_proto"
 version = "0.1.0"
+
+[[package]]
+name = "ftswarm_serial"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "serialport",
+]
 
 [[package]]
 name = "getrandom"
