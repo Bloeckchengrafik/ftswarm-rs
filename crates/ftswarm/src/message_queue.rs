@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::future::Future;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use ftswarm_proto::command::FtSwarmCommand;
@@ -51,25 +50,6 @@ impl ReturnQueue {
             let fnc = func.clone();
             let _ = fnc.try_send(value.clone());
         }
-    }
-    pub fn take_rpc_response_or_error(&mut self) -> Option<S2RMessage> {
-        let mut index = None;
-        for (i, value) in self.queue.iter().enumerate() {
-            if let S2RMessage::RPCResponse(_) = value {
-                index = Some(i);
-                break;
-            }
-            if let S2RMessage::Error(_) = value {
-                index = Some(i);
-                break;
-            }
-        }
-
-        if let Some(i) = index {
-            return Some(self.queue.remove(i));
-        }
-
-        None
     }
 
     pub fn push_sender(&mut self, sender: &SenderHandle) {

@@ -1,19 +1,29 @@
 use log::info;
-use ftswarm_proto::command::direct::FtSwarmDirectCommand::Whoami;
-use ftswarm_proto::command::FtSwarmCommand;
+use ftswarm::{aliases, FtSwarm};
+
+
+aliases! {
+    Aliases {
+        SWITCH = "switch",
+        LED1 = "led1",
+        LED2 = "led2",
+    }
+}
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), String> {
     env_logger::builder()
         .filter_level(log::LevelFilter::Trace)
         .init();
 
     // Automatically connects to the first available ftSwarm
-    let swarm = ftswarm::FtSwarm::default();
-    info!("Connected to the ftSwarm");
+    let swarm = FtSwarm::default();
 
-    swarm.send_command(FtSwarmCommand::Direct(Whoami));
-    info!("Sent Whoami command");
-    let response = swarm.read_response().await;
-    info!("Received response: {:?}", response);
+    let response = swarm.whoami().await?;
+    info!("WhoAmI: {}", response);
+
+    swarm.halt();
+    info!("Uptime: {:?}", swarm.uptime().await?);
+
+    Ok(())
 }

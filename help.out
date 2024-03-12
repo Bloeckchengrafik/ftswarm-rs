@@ -1,0 +1,53 @@
+Controller commands:
+  show                          - identify controller by blue LEDs
+  triggerUserEvent(P1,P2,..P10) - Trigger a user remote code.
+  setMicroStepMode(mode)        - set Microstep Mode / ftSwarmPwrDrive only
+  getMicroStepMode()            - get Microstep Mode / ftSwarmPwrDrive only
+
+Input commands (A1..A6):
+  subscribe( hysteresis )
+  getIOType()
+  setSensorType( sensorType, normallyOpen )
+  getSensorType()
+  getValue()
+  getVoltage()
+  getResistance()
+  getKelvin()
+  getCelcius()
+  getFahrenheit()
+  getToggle()
+  onTrigger( triggerEvent, actor, p1)
+  onTrigger( triggerEvent, actor)
+
+Joystick commands (JOY1..JOY2):
+  subscribe( int hysteresis )
+  getValue()
+  onTriggerLR( triggerEvent, actor, p1)
+  onTriggerLR( triggerEvent, actor)
+  onTriggerFB( triggerEvent, actor, p1)
+  onTriggerFB( triggerEvent, actor)
+
+Actor commands (M1..M2):
+  getActorType()
+  setActorType( actorType )
+  setSpeed( speed )
+  getSpeed()
+  setMotionType( motionType )
+  getMotionType()
+
+Servo commands (SERVO1..SERVO2):
+  setPosition( position )
+  getPosition()
+  setOffset( position )
+  getOffset()
+
+ftPixel commands (LED1..LED18):
+  setColor( color )
+  getColor()
+  setBrightness( brightness )
+  getBrightness()
+
+I2C commands:
+  setRegister( register, value )
+  getRegister( register )
+  onTrigger( triggerEvent, actor, p1)
