@@ -5,7 +5,8 @@ pub enum FtSwarmDirectCommand {
     Setup,
     Halt,
     Whoami,
-    Uptime
+    Uptime,
+    StartCli
 }
 
 impl NameOf for FtSwarmDirectCommand {
@@ -16,6 +17,7 @@ impl NameOf for FtSwarmDirectCommand {
             FtSwarmDirectCommand::Halt => "halt".to_string(),
             FtSwarmDirectCommand::Whoami => "whoami".to_string(),
             FtSwarmDirectCommand::Uptime => "uptime".to_string(),
+            FtSwarmDirectCommand::StartCli => "startCli".to_string(),
         }
     }
 }

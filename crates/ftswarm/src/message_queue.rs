@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::sync::{Arc};
 use tokio::sync::mpsc;
+use ftswarm_proto::command::FtSwarmCommand;
 use ftswarm_proto::message_parser::ReturnMessageType;
+use ftswarm_proto::Serialized;
 
 type Id = usize;
 
@@ -104,5 +106,25 @@ impl ReturnQueue {
             }
             false
         })).await
+    }
+}
+
+pub struct WriteQueue {
+    queue: Vec<FtSwarmCommand>,
+}
+
+impl WriteQueue {
+    pub fn new() -> Self {
+        WriteQueue {
+            queue: Vec::new(),
+        }
+    }
+
+    pub fn push(&mut self, value: FtSwarmCommand) {
+        self.queue.push(value);
+    }
+
+    pub fn pop(&mut self) -> Option<String> {
+        self.queue.pop().map(|value| value.serialize())
     }
 }
