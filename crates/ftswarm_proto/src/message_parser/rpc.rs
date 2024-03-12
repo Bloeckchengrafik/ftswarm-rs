@@ -7,22 +7,22 @@ fn parse_result(value: &str) -> Result<(), ()> {
 }
 
 #[derive(Debug)]
-pub enum ReturnParam {
+pub enum RPCReturnParam {
     Ok,
     Int(i32),
     Float(f32),
     String(String),
 }
 
-impl From<String> for ReturnParam {
+impl From<String> for RPCReturnParam {
     fn from(value: String) -> Self {
         match value.parse::<i32>() {
-            Ok(int) => ReturnParam::Int(int),
+            Ok(int) => RPCReturnParam::Int(int),
             Err(_) => match value.parse::<f32>() {
-                Ok(float) => ReturnParam::Float(float),
+                Ok(float) => RPCReturnParam::Float(float),
                 Err(_) => match parse_result(&value) {
-                    Ok(_) => ReturnParam::Ok,
-                    Err(_) => ReturnParam::String(value),
+                    Ok(_) => RPCReturnParam::Ok,
+                    Err(_) => RPCReturnParam::String(value),
                 },
             },
         }

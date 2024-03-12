@@ -1,9 +1,5 @@
-use std::io::Read;
-use serialport::SerialPort;
-
-pub use serial::SerialCommunication;
 pub use mock::FixedSerialPort;
-
+pub use serial::SerialCommunication;
 
 pub mod serial;
 pub mod mock;

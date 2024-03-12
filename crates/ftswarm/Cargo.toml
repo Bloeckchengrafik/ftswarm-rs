@@ -10,3 +10,11 @@ ftswarm_serial = { path = "../ftswarm_serial" }
 rand = "0.9.0-alpha.0"
 tokio.workspace = true
 log.workspace = true
+
+# deps for examples
+[dev-dependencies]
+env_logger = "0.11.3"
+
+[[example]]
+name = "hello_world"
+path = "examples/hello_world.rs"

@@ -1,42 +1,65 @@
 use std::collections::HashMap;
-use std::sync::{Arc};
+use std::future::Future;
+use std::sync::Arc;
 use tokio::sync::mpsc;
 use ftswarm_proto::command::FtSwarmCommand;
-use ftswarm_proto::message_parser::ReturnMessageType;
+use ftswarm_proto::message_parser::S2RMessage;
 use ftswarm_proto::Serialized;
 
-type Id = usize;
+type Id = i128;
 
 pub struct ReturnQueue {
-    queue: Vec<ReturnMessageType>,
-    funcs: HashMap<Id, Box<dyn Fn(&ReturnMessageType) + Send + 'static>>,
+    queue: Vec<S2RMessage>,
+    senders: HashMap<Id, Arc<mpsc::Sender<S2RMessage>>>,
+}
+
+pub struct SenderHandle {
+    pub receiver: mpsc::Sender<S2RMessage>,
+    uid: Id,
+}
+
+impl SenderHandle {
+    pub fn new(receiver: mpsc::Sender<S2RMessage>) -> Self {
+        SenderHandle {
+            receiver,
+            uid: rand::random::<Id>() << 64 | std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_micros() as Id,
+        }
+    }
+
+    pub fn create() -> (Self, mpsc::Receiver<S2RMessage>) {
+        let (s, r) = mpsc::channel(1);
+        (SenderHandle::new(s), r)
+    }
 }
 
 impl ReturnQueue {
     pub fn new() -> Self {
         ReturnQueue {
             queue: Vec::new(),
-            funcs: HashMap::new(),
+            senders: HashMap::new(),
         }
     }
 
-    pub fn push(&mut self, value: ReturnMessageType) {
-        if let ReturnMessageType::Log(val) = value {
+    pub fn push(&mut self, value: S2RMessage) {
+        if let S2RMessage::Log(val) = value {
             log::debug!("{}", val);
             return;
         }
 
         self.queue.push(value.clone());
-        for (_, func) in self.funcs.iter() {
+        for (_, func) in self.senders.iter() {
             let fnc = func.clone();
-            fnc(&value);
+            let _ = fnc.try_send(value.clone());
         }
     }
-
-    pub fn take_subscription(&mut self) -> Option<ReturnMessageType> {
+    pub fn take_rpc_response_or_error(&mut self) -> Option<S2RMessage> {
         let mut index = None;
         for (i, value) in self.queue.iter().enumerate() {
-            if let ReturnMessageType::Subscription(_) = value {
+            if let S2RMessage::RPCResponse(_) = value {
+                index = Some(i);
+                break;
+            }
+            if let S2RMessage::Error(_) = value {
                 index = Some(i);
                 break;
             }
@@ -49,63 +72,12 @@ impl ReturnQueue {
         None
     }
 
-    pub fn take_rpc_response_or_error(&mut self) -> Option<ReturnMessageType> {
-        let mut index = None;
-        for (i, value) in self.queue.iter().enumerate() {
-            if let ReturnMessageType::RPCResponse(_) = value {
-                index = Some(i);
-                break;
-            }
-            if let ReturnMessageType::Error(_) = value {
-                index = Some(i);
-                break;
-            }
-        }
-
-        if let Some(i) = index {
-            return Some(self.queue.remove(i));
-        }
-
-        None
+    pub fn push_sender(&mut self, sender: &SenderHandle) {
+        self.senders.insert(sender.uid, Arc::new(sender.receiver.clone()));
     }
 
-    async fn take_or_wait(&mut self, filter: Box<dyn Fn(&ReturnMessageType) -> bool + Send + 'static>) -> ReturnMessageType {
-        let (s, mut r) = mpsc::channel(1);
-        let uid = rand::random::<Id>();
-        let sender = Arc::new(s);
-        let sender_for_closure = sender.clone();
-        self.funcs.insert(uid, Box::new(move |value: &ReturnMessageType| {
-            if filter(value) {
-                let s = sender_for_closure.clone();
-                let _ = s.send(value.clone());
-            }
-        }));
-
-        let _ = r.recv().await.unwrap();
-        // Pop the function we just added
-        self.funcs.remove(&uid);
-        self.queue.pop().unwrap()
-    }
-
-    async fn take_or_wait_subscription(&mut self) -> ReturnMessageType {
-        self.take_or_wait(Box::new(|value| {
-            if let ReturnMessageType::Subscription(_) = value {
-                return true;
-            }
-            false
-        })).await
-    }
-
-    async fn take_or_wait_rpc_response_or_error(&mut self) -> ReturnMessageType {
-        self.take_or_wait(Box::new(|value| {
-            if let ReturnMessageType::RPCResponse(_) = value {
-                return true;
-            }
-            if let ReturnMessageType::Error(_) = value {
-                return true;
-            }
-            false
-        })).await
+    pub fn drop_sender(&mut self, handle: &SenderHandle) {
+        self.senders.remove(&handle.uid);
     }
 }
 

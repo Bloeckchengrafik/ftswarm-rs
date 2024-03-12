@@ -1,5 +1,5 @@
-use ftswarm_proto::message_parser::ReturnMessageType;
-use ftswarm_proto::message_parser::rpc::ReturnParam;
+use ftswarm_proto::message_parser::S2RMessage;
+use ftswarm_proto::message_parser::rpc::RPCReturnParam;
 
 fn main() {
     let messages = vec![
@@ -10,7 +10,7 @@ fn main() {
     ];
 
     for message in messages {
-        match ReturnMessageType::try_from(message.to_string()) {
+        match S2RMessage::try_from(message.to_string()) {
             Ok(msg) => println!("Message: {:?}", msg),
             Err(e) => println!("Error: {}", e),
         }
@@ -23,7 +23,7 @@ fn main() {
     ];
 
     for value in return_values {
-        match ReturnParam::try_from(value.to_string()) {
+        match RPCReturnParam::try_from(value.to_string()) {
             Ok(msg) => println!("Param: {:?}", msg),
             Err(e) => println!("Error: {}", e),
         }

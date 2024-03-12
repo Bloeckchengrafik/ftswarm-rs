@@ -1,7 +1,7 @@
 pub mod rpc;
 
 #[derive(Debug, Clone)]
-pub enum ReturnMessageType {
+pub enum S2RMessage {
     Log(String),
     RPCResponse(String),
     Subscription(String),
@@ -25,22 +25,22 @@ fn is_error_message(message: &str) -> bool {
     message.trim().starts_with("^")
 }
 
-impl From<String> for ReturnMessageType {
+impl From<String> for S2RMessage {
     fn from(value: String) -> Self {
         if value.contains("@@@ ftSwarmOS CLI started") {
-            return ReturnMessageType::StartCLI;
+            return S2RMessage::StartCLI;
         }
 
         return if is_log_message(&value) {
-            ReturnMessageType::Log(value)
+            S2RMessage::Log(value)
         } else if is_rpc_response(&value) {
-            ReturnMessageType::RPCResponse(value.replacen("R: ", "", 1))
+            S2RMessage::RPCResponse(value.replacen("R: ", "", 1))
         } else if is_subscription_response(&value) {
-            ReturnMessageType::Subscription(value.replacen("S: ", "", 1))
+            S2RMessage::Subscription(value.replacen("S: ", "", 1))
         } else if is_error_message(&value) {
-            ReturnMessageType::Error(value.replacen("^ Error:", "", 1).trim().to_string())
+            S2RMessage::Error(value.replacen("^ Error:", "", 1).trim().to_string())
         } else {
-            ReturnMessageType::RPCResponse(value)
+            S2RMessage::RPCResponse(value)
         }
     }
 }

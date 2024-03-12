@@ -15,16 +15,31 @@ impl SerialCommunication {
     }
 
     pub fn connect(tty: &str) -> Self {
-        let port = serialport::new(tty, 115200).open().unwrap();
+        let port = serialport::new(tty, 115200)
+            .timeout(std::time::Duration::from_millis(10))
+            .open()
+            .expect(format!("Failed to open serial port at {}", tty).as_str());
+
         SerialCommunication {
             port
         }
+    }
+
+    pub fn get_first_available() -> Result<String, String> {
+        let ports = serialport::available_ports()
+            .map_err(|_| "No serial ports found")?;
+
+        if ports.is_empty() {
+            return Err("No serial ports found".to_string());
+        }
+
+        Ok(ports[0].port_name.clone())
     }
 }
 
 impl Default for SerialCommunication {
     fn default() -> Self {
-        let tty = serialport::available_ports().expect("No serial ports found").first().unwrap().port_name.clone();
+        let tty = SerialCommunication::get_first_available().expect("No serial ports found");
         SerialCommunication::connect(&tty)
     }
 }
@@ -49,12 +64,30 @@ impl SwarmSerialPort for SerialCommunication {
 
     fn write_line(&mut self, line: String) {
         self.port.write_all(line.as_bytes()).unwrap();
-        self.port.write_all(b"\n").unwrap();
+        self.port.write_all(b"\r\n").unwrap();
     }
 
     fn block_until(&mut self, line: String) {
-        let mut buf = Vec::from(line.as_bytes());
-        self.port.read_to_end(&mut buf).unwrap();
+        // Read until the line is found
+        let mut line_pos = 0;
+        loop {
+            if !self.available() {
+                sleep(std::time::Duration::from_millis(10));
+                continue;
+            }
+            let mut byte = [0];
+            self.port.read_exact(&mut byte).unwrap();
+
+            if byte[0] == line.as_bytes()[line_pos] {
+                line_pos += 1;
+                if line_pos == line.len() {
+                    break;
+                }
+            } else {
+                line_pos = 0;
+            }
+        }
+
         sleep(std::time::Duration::from_millis(10));
 
         if let Ok(t) = self.port.bytes_to_read() {
