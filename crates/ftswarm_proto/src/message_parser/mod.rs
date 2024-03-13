@@ -1,4 +1,5 @@
 pub mod rpc;
+pub mod subscription;
 
 #[derive(Debug, Clone)]
 pub enum S2RMessage {

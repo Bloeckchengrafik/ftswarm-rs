@@ -1,18 +1,17 @@
 use std::collections::HashMap;
-use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
+use proto::message_parser::subscription::Subscription;
+use swarm_object::Updateable;
 use tokio::task::JoinHandle;
 use tokio::time::{Duration, sleep};
 use ftswarm_proto::command::direct::FtSwarmDirectCommand;
 use ftswarm_proto::command::FtSwarmCommand;
 use ftswarm_proto::message_parser::rpc::RPCReturnParam;
 use ftswarm_proto::message_parser::S2RMessage;
-use ftswarm_proto::message_parser::S2RMessage::Subscription;
 use ftswarm_proto::Serialized;
 use ftswarm_serial::SwarmSerialPort;
 use ftswarm_serial::serial::SerialCommunication;
 use crate::message_queue::{ReturnQueue, SenderHandle, WriteQueue};
-use crate::swarm_object::SwarmObject;
 
 pub use ftswarm_proto as proto;
 use crate::direct::{parse_uptime, WhoamiResponse};
@@ -64,7 +63,7 @@ macro_rules! aliases {
 }
 
 struct InnerFtSwarm {
-    objects: HashMap<String, Box<dyn SwarmObject + Send>>,
+    objects: HashMap<String, Arc<Mutex<Box<dyn Updateable + Send + Sync>>>>,
     message_queue: ReturnQueue,
     write_queue: WriteQueue,
 }
@@ -80,15 +79,14 @@ impl InnerFtSwarm {
 }
 
 /// A struct representing a connection to an ftSwarm
-pub struct FtSwarm<Serial: SwarmSerialPort + 'static> {
+pub struct FtSwarm {
     inner: Arc<Mutex<InnerFtSwarm>>,
-    coro: JoinHandle<()>,
-    _serial: PhantomData<Serial>,
+    coro: Option<JoinHandle<()>>,
 }
 
-impl<Serial: SwarmSerialPort + 'static> FtSwarm<Serial> {
+impl FtSwarm {
     /// Create a new FtSwarm instance, you must provide a serial port to connect to it
-    pub fn new(mut serial: Serial) -> Self {
+    pub fn new<Serial: SwarmSerialPort + 'static>(mut serial: Serial) -> Self {
         let inner = Arc::new(Mutex::new(InnerFtSwarm::new()));
 
         let inner_for_thread = inner.clone();
@@ -104,12 +102,11 @@ impl<Serial: SwarmSerialPort + 'static> FtSwarm<Serial> {
 
         FtSwarm {
             inner,
-            coro: handle,
-            _serial: PhantomData,
+            coro: Some(handle),
         }
     }
 
-    async fn input_loop(inner_ft_swarm: Arc<Mutex<InnerFtSwarm>>, mut serial_port: Serial) {
+    async fn input_loop<Serial: SwarmSerialPort + 'static>(inner_ft_swarm: Arc<Mutex<InnerFtSwarm>>, mut serial_port: Serial) {
         loop {
             { // Free lock as soon as possible
                 let mut inner = inner_ft_swarm.lock().unwrap();
@@ -118,8 +115,13 @@ impl<Serial: SwarmSerialPort + 'static> FtSwarm<Serial> {
                 if serial_port.available() {
                     let line = serial_port.read_line().replace("\n", "").replace("\r", "");
                     let response = S2RMessage::from(line);
-                    if let Subscription(subscription) = response {
-                        dbg!(subscription);
+                    if let S2RMessage::Subscription(subscription) = response {
+                        if let Ok(subscription) = Subscription::try_from(subscription) {
+                            if let Some(object) = inner.objects.get(&subscription.port_name) {
+                                let mut object = object.lock().unwrap();
+                                object.handle_subscription(&subscription.value);
+                            }
+                        }   
                     } else {
                         inner.message_queue.push(response);
                     }
@@ -133,6 +135,16 @@ impl<Serial: SwarmSerialPort + 'static> FtSwarm<Serial> {
 
             sleep(Duration::from_millis(5)).await; // Don't be a menace to society while waiting
         }
+    }
+
+    pub(crate) fn push_cache<T: Updateable + Send + Sync>(&self, object: Arc<Mutex<Box<T>>>, name: &str) {
+        let mut inner = self.inner.lock().unwrap();
+        inner.objects.insert(name.to_string(), unsafe { std::mem::transmute(object) });
+    }
+
+    pub(crate) fn get_object(&self, name: &str) -> Option<Arc<Mutex<Box<dyn Updateable + Send + Sync>>>> {
+        let inner = self.inner.lock().unwrap();
+        inner.objects.get(name).map(|x| x.clone())
     }
 
     /// Low-level method to send a command to the ftSwarm. Only use this as a last resort
@@ -197,15 +209,23 @@ impl<Serial: SwarmSerialPort + 'static> FtSwarm<Serial> {
     }
 }
 
-impl<Serial: SwarmSerialPort + 'static> Drop for FtSwarm<Serial> {
+impl Drop for FtSwarm {
     fn drop(&mut self) {
-        self.coro.abort();
+        if let Some(coro) = self.coro.take() {
+            coro.abort();
+        }
+    }
+}
+
+impl Clone for FtSwarm {
+    fn clone(&self) -> Self {
+        Self { inner: self.inner.clone(), coro: None }
     }
 }
 
 /// You can use the default implementation of FtSwarm if you just want to connect to the
 /// first available ftSwarm
-impl Default for FtSwarm<SerialCommunication> {
+impl Default for FtSwarm {
     fn default() -> Self {
         FtSwarm::new(SerialCommunication::default())
     }

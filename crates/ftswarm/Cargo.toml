@@ -7,6 +7,7 @@ description = "A simple swarm protocol communication library"
 [dependencies]
 ftswarm_proto = { path = "../ftswarm_proto" }
 ftswarm_serial = { path = "../ftswarm_serial" }
+ftswarm_macros = { path = "../ftswarm_macros" }
 rand = "0.9.0-alpha.0"
 tokio.workspace = true
 log.workspace = true

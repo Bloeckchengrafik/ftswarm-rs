@@ -165,11 +165,21 @@ name = "ftswarm"
 version = "0.1.0"
 dependencies = [
  "env_logger",
+ "ftswarm_macros",
  "ftswarm_proto",
  "ftswarm_serial",
  "log",
  "rand",
  "tokio",
+]
+
+[[package]]
+name = "ftswarm_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
