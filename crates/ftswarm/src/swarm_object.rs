@@ -1,9 +1,44 @@
-use std::{future::{Future, IntoFuture}, sync::{Arc, Mutex}};
+pub mod ntc;
+pub mod analog;
+pub mod voltmeter;
+pub mod ohmmeter;
+pub mod ldr;
+pub mod trailsensor;
+pub mod colorsensor;
+pub mod ultrasonic;
+pub mod digital;
+pub mod counter;
+pub mod frequencymeter;
+pub mod lightbarrier;
+pub mod reedswitch;
+pub mod rotaryencoder;
+pub mod switch;
+
+pub mod servo;
+
+use std::{future::Future, sync::{Arc, Mutex}};
 
 use ftswarm_macros::Updateable;
 use ftswarm_proto::{command::{argument::Argument, rpc::{FtSwarmRPCCommand, RpcFunction}, FtSwarmCommand}, message_parser::rpc::RPCReturnParam};
 
 use crate::FtSwarm;
+
+pub use servo::Servo;
+pub use ntc::Ntc;
+pub use analog::Analog;
+pub use voltmeter::Voltmeter;
+pub use ohmmeter::Ohmmeter;
+pub use ldr::Ldr;
+pub use trailsensor::TrailSensor;
+pub use colorsensor::ColorSensor;
+pub use ultrasonic::Ultrasonic;
+pub use digital::Digital;
+pub use counter::Counter;
+pub use frequencymeter::FrequencyMeter;
+pub use lightbarrier::LightBarrier;
+pub use reedswitch::ReedSwitch;
+pub use rotaryencoder::RotaryEncoder;
+pub use switch::Switch;
 
 pub type Io<T> = Arc<Mutex<Box<T>>>;
 
@@ -40,126 +75,10 @@ pub trait SwarmObject<Params>: NewSwarmObject<Params> + Updateable + Clone + Syn
             function: func,
             args
         };
-
-        if func.clone() == RpcFunction::Subscribe {
-            self.swarm().send_command(FtSwarmCommand::RPC(command));
-
-            return async move {
-                Ok(RPCReturnParam::Ok)
-            }
-        }
         
-        let fut = self.swarm().transact(FtSwarmCommand::RPC(command));
-
-        return fut;
+        return self.swarm().transact(FtSwarmCommand::RPC(command));
     }
-}
-
-#[derive(Updateable, Clone)]
-pub struct Servo {
-    pub name: String,
-    swarm: FtSwarm
-}
-
-impl SwarmObject<()> for Servo {
-    
-}
-
-impl NewSwarmObject<()> for Servo {
-    fn new(name: &str, swarm: FtSwarm, _params: ()) -> Box<Self> {
-        Box::new(Servo {
-            name: name.to_string(),
-            swarm
-        })
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn swarm(&self) -> &FtSwarm {
-        &self.swarm
-    }
-}
-
-impl Servo {
-    pub async fn get_position(&self) -> Option<i32> {
-        self.run_command(RpcFunction::GetPosition, vec![])
-            .await.ok()
-            .and_then(|param| param.as_int())
-    }
-
-    pub async fn set_position(&self, position: i32) -> Result<(), String> {
-        self.run_command(RpcFunction::SetPosition, vec![Argument::Int(position as i64)])
-            .await
-            .map(|_| ())
-    }
-
-    pub async fn get_offset(&self) -> Option<i32> {
-        self.run_command(RpcFunction::GetOffset, vec![])
-            .await.ok()
-            .and_then(|param| param.as_int())
-    }
-
-    pub async fn set_offset(&self, offset: i32) -> Result<(), String> {
-        self.run_command(RpcFunction::SetOffset, vec![Argument::Int(offset as i64)])
-            .await
-            .map(|_| ())
-    }
-}
-
-#[derive(Clone)]
-pub struct Ntc {
-    pub name: String,
-    pub hysteresis: Hysteresis,
-    pub value: i32,
-    swarm: FtSwarm
 }
 
 #[derive(Clone)]
 pub struct Hysteresis(pub i32);
-
-impl SwarmObject<Hysteresis> for Ntc {
-}
-
-impl Updateable for Ntc {
-    fn handle_subscription(&mut self, message: &RPCReturnParam) {
-        if let RPCReturnParam::Int(value) = message {
-            self.value = *value;
-        }
-    }
-}
-
-impl NewSwarmObject<Hysteresis> for Ntc {
-    fn new(name: &str, swarm: FtSwarm, hysteresis: Hysteresis) -> Box<Self> {
-        Box::new(Ntc {
-            name: name.to_string(),
-            hysteresis,
-            value: 0,
-            swarm
-        })
-    }
-
-    fn init(&mut self) -> impl Future<Output = ()> {
-        async move {
-            self.run_command(
-                RpcFunction::Subscribe, 
-                vec![Argument::Int(self.hysteresis.0.clone() as i64)]
-            ).await.unwrap();
-
-            self.value = self.run_command(RpcFunction::GetValue, vec![])
-                .await.ok()
-                .and_then(|param| param.as_int())
-                .unwrap_or(0);
-        }
-    
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn swarm(&self) -> &FtSwarm {
-        &self.swarm
-    }
-}

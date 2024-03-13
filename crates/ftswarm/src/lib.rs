@@ -14,6 +14,7 @@ use ftswarm_serial::serial::SerialCommunication;
 use crate::message_queue::{ReturnQueue, SenderHandle, WriteQueue};
 
 pub use ftswarm_proto as proto;
+use ftswarm_proto::command::rpc::RpcFunction;
 use crate::direct::{parse_uptime, WhoamiResponse};
 
 mod message_queue;
@@ -176,7 +177,18 @@ impl FtSwarm {
 
     /// Low-level method to send a command to the ftSwarm and receive a response. Only use this as a last resort
     pub async fn transact(&self, command: FtSwarmCommand) -> Result<RPCReturnParam, String> {
+        // Subscribe commands don't return a response
+        let is_subscription = match &command {
+            FtSwarmCommand::RPC(cmd) => cmd.function == RpcFunction::Subscribe,
+            _ => false,
+        };
+
         self.send_command(command);
+
+        if is_subscription {
+            return Ok(RPCReturnParam::Ok)
+        }
+
         self.read_response().await
     }
 

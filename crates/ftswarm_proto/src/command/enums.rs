@@ -85,3 +85,29 @@ impl IdOf for MotionType {
         }
     }
 }
+
+pub enum ToggleType {
+    None,
+    Up,
+    Down
+}
+
+impl IdOf for ToggleType {
+    fn id(&self) -> u32 {
+        match self {
+            ToggleType::None => 0,
+            ToggleType::Up => 1,
+            ToggleType::Down => 2,
+        }
+    }
+}
+
+impl From<i32> for ToggleType {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => ToggleType::Up,
+            2 => ToggleType::Down,
+            _ => ToggleType::None,
+        }
+    }
+}
