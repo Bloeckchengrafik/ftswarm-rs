@@ -14,5 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: rustup update stable && rustup default stable
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libudev-dev
+          version: 1.0
       - run: cargo test --verbose -- --nocapture
   
