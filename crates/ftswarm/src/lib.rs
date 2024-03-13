@@ -142,11 +142,6 @@ impl FtSwarm {
         inner.objects.insert(name.to_string(), unsafe { std::mem::transmute(object) });
     }
 
-    pub(crate) fn get_object(&self, name: &str) -> Option<Arc<Mutex<Box<dyn Updateable + Send + Sync>>>> {
-        let inner = self.inner.lock().unwrap();
-        inner.objects.get(name).map(|x| x.clone())
-    }
-
     /// Low-level method to send a command to the ftSwarm. Only use this as a last resort
     pub fn send_command(&self, command: FtSwarmCommand) {
         let mut inner = self.inner.lock().unwrap();
