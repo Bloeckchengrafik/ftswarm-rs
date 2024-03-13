@@ -6,7 +6,7 @@ fn parse_result(value: &str) -> Result<(), ()> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum RPCReturnParam {
     Ok,
     Int(i32),

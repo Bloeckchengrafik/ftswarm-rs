@@ -56,10 +56,14 @@ pub trait NewSwarmObject<Params> {
 }
 
 pub trait SwarmObject<Params>: NewSwarmObject<Params> + Updateable + Clone + Sync + Send {
-    fn create(swarm: &FtSwarm, name: &str, params: Params) -> impl Future<Output = Io<Self>> {
+    fn create(swarm: &FtSwarm, name: &str, params: Params) -> impl Future<Output = Io<Self>> where Self: 'static {
         let obj = Self::new(name, swarm.clone(), params);
         let arc = Arc::new(Mutex::new(obj));
-        swarm.push_cache(arc.clone(), name);
+        let for_closure = arc.clone();
+        swarm.push_cache(Box::new(move |subscription| {
+            let mut obj = for_closure.lock().unwrap();
+            obj.handle_subscription(&subscription);
+        }), name);
         async move { 
             {
                 let mut obj = arc.lock().unwrap();

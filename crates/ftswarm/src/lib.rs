@@ -67,7 +67,7 @@ macro_rules! aliases {
 }
 
 struct InnerFtSwarm {
-    objects: HashMap<String, Arc<Mutex<Box<dyn Updateable + Send + Sync>>>>,
+    objects: HashMap<String, Box<dyn Fn(RPCReturnParam) + Send>>,
     message_queue: ReturnQueue,
     write_queue: WriteQueue,
 }
@@ -122,8 +122,7 @@ impl FtSwarm {
                     if let S2RMessage::Subscription(subscription) = response {
                         if let Ok(subscription) = Subscription::try_from(subscription) {
                             if let Some(object) = inner.objects.get(&subscription.port_name) {
-                                let mut object = object.lock().unwrap();
-                                object.handle_subscription(&subscription.value);
+                                object(subscription.value.clone());
                             }
                         }   
                     } else {
@@ -141,7 +140,7 @@ impl FtSwarm {
         }
     }
 
-    pub(crate) fn push_cache<T: Updateable + Send + Sync>(&self, object: Arc<Mutex<Box<T>>>, name: &str) {
+    pub(crate) fn push_cache(&self, object: Box<dyn Fn(RPCReturnParam) + Send>, name: &str) {
         let mut inner = self.inner.lock().unwrap();
         inner.objects.insert(name.to_string(), object);
     }

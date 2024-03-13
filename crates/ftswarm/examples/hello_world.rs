@@ -37,5 +37,7 @@ async fn main() -> Result<(), String> {
                 info!("Switch state: {}", switch_state);
             }
         }
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
     }
 }
