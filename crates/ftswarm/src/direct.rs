@@ -5,7 +5,7 @@ use std::time::Duration;
 pub struct WhoamiResponse {
     pub hostname: String,
     pub id: String,
-    pub serial: Option<String>,
+    pub serial: Option<i32>,
 }
 
 impl TryFrom<String> for  WhoamiResponse {
@@ -16,7 +16,7 @@ impl TryFrom<String> for  WhoamiResponse {
         let id = parts.next().ok_or("No ID found")?;
         let hostname = parts.next().ok_or("No hostname found")?;
 
-        let serial = parts.next().map(|s| s.to_string());
+        let serial = id.replace("ftSwarm", "").parse().ok();
 
         Ok(WhoamiResponse {
             hostname: hostname.to_string(),

@@ -20,6 +20,9 @@ mod message_queue;
 pub mod swarm_object;
 mod direct;
 
+#[cfg(test)]
+mod tests;
+
 /// A macro to create a struct with static string aliases
 ///
 /// # Example
@@ -51,7 +54,7 @@ macro_rules! aliases {
         }
     ) => {
         #[derive(Debug)]
-        struct $enum_name {
+        pub struct $enum_name {
         }
 
         impl $enum_name {

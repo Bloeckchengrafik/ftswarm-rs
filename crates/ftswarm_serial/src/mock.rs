@@ -14,10 +14,9 @@ impl FixedSerialPort {
         }
     }
 
-    #[allow(dead_code)]
-    fn add_response(&self, response: String) {
+    pub fn add_response(&self, response: &str) {
         let mut commands = self.commands.lock().unwrap();
-        commands.push(response);
+        commands.push(response.to_string());
     }
 
     fn pop_command(&self) -> Option<String> {
