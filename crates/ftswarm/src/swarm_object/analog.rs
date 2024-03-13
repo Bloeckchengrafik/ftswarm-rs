@@ -1,4 +1,3 @@
-
 use std::future::Future;
 use ftswarm_macros::{default_new_swarm_object_impls, impl_swarm_object, impl_int_updateable};
 use ftswarm_proto::command::argument::Argument;
@@ -7,47 +6,54 @@ use ftswarm_proto::command::rpc::RpcFunction;
 use ftswarm_proto::message_parser::rpc::RPCReturnParam;
 use crate::FtSwarm;
 use crate::swarm_object::{Hysteresis, NewSwarmObject, NormallyOpen, SwarmObject, Updateable};
+use ftswarm_macros::analog_swarm_object;
 
-#[derive(Clone)]
-pub struct Analog {
-    pub name: String,
-    pub hysteresis: Hysteresis,
-    pub value: i32,
-    swarm: FtSwarm
-}
+analog_swarm_object!(Analog);
+analog_swarm_object!(ColorSensor);
+analog_swarm_object!(Ldr);
+analog_swarm_object!(Thermometer);
+analog_swarm_object!(Ohmmeter);
+analog_swarm_object!(TrailSensor);
+analog_swarm_object!(Ultrasonic);
+analog_swarm_object!(Voltmeter);
 
-impl_int_updateable!(Analog);
-impl_swarm_object!(Analog, Hysteresis);
-
-impl NewSwarmObject<Hysteresis> for Analog {
-    default_new_swarm_object_impls!();
-
-    fn new(name: &str, swarm: FtSwarm, hysteresis: Hysteresis) -> Box<Self> {
-        Box::new(Analog {
-            name: name.to_string(),
-            hysteresis,
-            value: 0,
-            swarm
-        })
+impl Thermometer {
+    pub async fn get_kelvin(&self) -> f32 {
+        return self.run_command(RpcFunction::GetKelvin, vec![])
+            .await.ok()
+            .and_then(|param| param.as_float())
+            .unwrap_or(0.0);
     }
 
-    fn init(&mut self) -> impl Future<Output = ()> {
-        async move {
-            self.run_command(
-                RpcFunction::SetSensorType,
-                vec![Argument::SensorType(SensorType::Analog), NormallyOpen::Open.into()]
-            ).await.unwrap();
+    pub async fn get_celsius(&self) -> f32 {
+        return self.run_command(RpcFunction::GetCelsius, vec![])
+            .await.ok()
+            .and_then(|param| param.as_float())
+            .unwrap_or(0.0);
+    }
 
-            self.run_command(
-                RpcFunction::Subscribe,
-                vec![Argument::Int(self.hysteresis.0.clone() as i64)]
-            ).await.unwrap();
-
-            self.value = self.run_command(RpcFunction::GetValue, vec![])
-                .await.ok()
-                .and_then(|param| param.as_int())
-                .unwrap_or(0);
-        }
+    pub async fn get_fahrenheit(&self) -> f32 {
+        return self.run_command(RpcFunction::GetFahrenheit, vec![])
+            .await.ok()
+            .and_then(|param| param.as_float())
+            .unwrap_or(0.0);
     }
 }
-    
+
+impl Ohmmeter {
+    pub async fn get_resistance(&self) -> f32 {
+        return self.run_command(RpcFunction::GetResistance, vec![])
+            .await.ok()
+            .and_then(|param| param.as_float())
+            .unwrap_or(0.0);
+    }
+}
+
+impl Voltmeter {
+    pub async fn get_voltage(&self) -> f32 {
+        return self.run_command(RpcFunction::GetVoltage, vec![])
+            .await.ok()
+            .and_then(|param| param.as_float())
+            .unwrap_or(0.0);
+    }
+}

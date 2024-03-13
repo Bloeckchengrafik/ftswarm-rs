@@ -19,6 +19,3 @@ env_logger = "0.11.3"
 [[example]]
 name = "hello_world"
 path = "examples/hello_world.rs"
-
-[profile.release]
-debug = 1

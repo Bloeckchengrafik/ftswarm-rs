@@ -40,6 +40,7 @@ impl RPCReturnParam {
     pub fn as_float(&self) -> Option<f32> {
         match self {
             RPCReturnParam::Float(float) => Some(*float),
+            RPCReturnParam::Int(int) => Some(*int as f32),
             _ => None,
         }
     }

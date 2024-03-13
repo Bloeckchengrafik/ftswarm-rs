@@ -1,6 +1,6 @@
 use log::info;
 use ftswarm::{aliases, FtSwarm};
-use ftswarm::swarm_object::{NormallyOpen, SwarmObject, Switch};
+use ftswarm::swarm_object::{Digital, NormallyOpen, SwarmObject, Switch};
 
 
 aliases! {
@@ -26,7 +26,7 @@ async fn main() -> Result<(), String> {
     swarm.halt();
     info!("Uptime: {:?}", swarm.uptime().await?);
 
-    let switch = Switch::create(&swarm, Aliases::SWITCH, NormallyOpen::Open).await;
+    let switch = Digital::create(&swarm, Aliases::SWITCH, NormallyOpen::Open).await;
 
     let mut switch_state = false;
     loop {

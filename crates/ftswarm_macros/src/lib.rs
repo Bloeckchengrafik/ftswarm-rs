@@ -1,8 +1,14 @@
+mod digital_swarm_objects;
+mod analog_swarm_objects;
+
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use syn::{DeriveInput, Expr, Token};
 use quote::quote;
 use syn::parse::Parse;
+
+use digital_swarm_objects::digital_swarm_object_impl;
+use crate::analog_swarm_objects::analog_swarm_object_impl;
 
 
 /// This macro generates an empty `Updateable` trait implementation for a given struct.
@@ -106,4 +112,14 @@ pub fn default_new_swarm_object_impls(_: TokenStream) -> TokenStream {
             &self.swarm
         }
     }.into();
+}
+
+#[proc_macro]
+pub fn digital_swarm_object(input: TokenStream) -> TokenStream {
+    digital_swarm_object_impl(input)
+}
+
+#[proc_macro]
+pub fn analog_swarm_object(input: TokenStream) -> TokenStream {
+    analog_swarm_object_impl(input)
 }
