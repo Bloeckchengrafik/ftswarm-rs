@@ -1,6 +1,7 @@
 use crate::{NameOf, Serialized};
 use crate::command::argument::Argument;
 
+#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
 pub enum RpcFunction {
     Show,
     TriggerUserEvent,

@@ -28,3 +28,33 @@ impl From<String> for RPCReturnParam {
         }
     }
 }
+
+impl RPCReturnParam {
+    pub fn as_int(&self) -> Option<i32> {
+        match self {
+            RPCReturnParam::Int(int) => Some(*int),
+            _ => None,
+        }
+    }
+
+    pub fn as_float(&self) -> Option<f32> {
+        match self {
+            RPCReturnParam::Float(float) => Some(*float),
+            _ => None,
+        }
+    }
+
+    pub fn as_string(&self) -> Option<&String> {
+        match self {
+            RPCReturnParam::String(string) => Some(string),
+            _ => None,
+        }
+    }
+
+    pub fn as_ok(&self) -> Option<()> {
+        match self {
+            RPCReturnParam::Ok => Some(()),
+            _ => None,
+        }
+    }
+}

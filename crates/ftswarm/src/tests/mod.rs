@@ -1,6 +1,6 @@
 use ftswarm_serial::FixedSerialPort;
 
-use crate::{aliases, FtSwarm};
+use crate::{aliases, swarm_object::{Io, Servo, SwarmObject}, FtSwarm};
 
 aliases! {
     Outputs {
@@ -23,7 +23,7 @@ fn test_aliases() {
 }
 
 #[tokio::test]
-async fn test_lowlevel() {
+async fn test_whoami() {
     let static_serial = FixedSerialPort::new();
     static_serial.add_response("ftSwarm100/example");
 
@@ -32,4 +32,46 @@ async fn test_lowlevel() {
     assert_eq!(whoami.hostname, "example");
     assert_eq!(whoami.id, "ftSwarm100");
     assert_eq!(whoami.serial, Some(100));
+}
+
+#[tokio::test]
+async fn test_servo() {
+    let static_serial = FixedSerialPort::new();
+    static_serial.add_response("R: 0");
+    static_serial.add_response("R: 10");
+    static_serial.add_response("R: Ok");
+    static_serial.add_response(" ^ Port not found");
+
+    let swarm = FtSwarm::new(static_serial);
+    let servo: Io<Servo> = Servo::create(&swarm, "example", ()).await;
+    
+    {
+        let servo = servo.lock().unwrap();
+        assert_eq!(servo.get_position().await, Some(0));
+        assert_eq!(servo.get_offset().await, Some(10));
+
+        servo.set_offset(32).await.unwrap();
+        servo.set_position(32).await.unwrap_err();
+    }
+}
+
+#[tokio::test]
+async fn test_ntc() {
+    let static_serial = FixedSerialPort::new();
+    static_serial.add_response("R: 0");
+    static_serial.add_response("R: 10");
+    static_serial.add_response("R: Ok");
+    static_serial.add_response(" ^ Port not found");
+
+    let swarm = FtSwarm::new(static_serial);
+    let ntc: Io<Servo> = Servo::create(&swarm, "example", ()).await;
+    
+    {
+        let servo = ntc.lock().unwrap();
+        assert_eq!(servo.get_position().await, Some(0));
+        assert_eq!(servo.get_offset().await, Some(10));
+
+        servo.set_offset(32).await.unwrap();
+        servo.set_position(32).await.unwrap_err();
+    }
 }
