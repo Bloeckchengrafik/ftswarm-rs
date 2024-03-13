@@ -143,7 +143,7 @@ impl FtSwarm {
 
     pub(crate) fn push_cache<T: Updateable + Send + Sync>(&self, object: Arc<Mutex<Box<T>>>, name: &str) {
         let mut inner = self.inner.lock().unwrap();
-        inner.objects.insert(name.to_string(), unsafe { std::mem::transmute(object) });
+        inner.objects.insert(name.to_string(), object);
     }
 
     /// Low-level method to send a command to the ftSwarm. Only use this as a last resort
