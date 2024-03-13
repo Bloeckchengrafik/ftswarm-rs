@@ -6,25 +6,27 @@ use ftswarm_proto::command::enums::{SensorType, ToggleType};
 use ftswarm_proto::command::rpc::RpcFunction;
 use ftswarm_proto::message_parser::rpc::RPCReturnParam;
 use crate::FtSwarm;
-use crate::swarm_object::{NewSwarmObject, SwarmObject, Updateable};
+use crate::swarm_object::{NewSwarmObject, NormallyOpen, SwarmObject, Updateable};
 
 #[derive(Clone)]
 pub struct ReedSwitch {
     pub name: String,
     pub value: bool,
+    normally_open: NormallyOpen,
     swarm: FtSwarm,
 }
 
 impl_bool_updateable!(ReedSwitch);
-impl_swarm_object!(ReedSwitch, ());
+impl_swarm_object!(ReedSwitch, NormallyOpen);
 
-impl NewSwarmObject<()> for ReedSwitch {
+impl NewSwarmObject<NormallyOpen> for ReedSwitch {
     default_new_swarm_object_impls!();
 
-    fn new(name: &str, swarm: FtSwarm, _: ()) -> Box<Self> {
+    fn new(name: &str, swarm: FtSwarm, normally_open: NormallyOpen) -> Box<Self> {
         Box::new(ReedSwitch {
             name: name.to_string(),
             value: false,
+            normally_open,
             swarm,
         })
     }
@@ -33,7 +35,7 @@ impl NewSwarmObject<()> for ReedSwitch {
         async move {
             self.run_command(
                 RpcFunction::SetSensorType,
-                vec![Argument::SensorType(SensorType::ReedSwitch)],
+                vec![Argument::SensorType(SensorType::ReedSwitch), self.normally_open.clone().into()],
             ).await.unwrap();
 
             self.run_command(

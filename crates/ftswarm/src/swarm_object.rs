@@ -82,3 +82,19 @@ pub trait SwarmObject<Params>: NewSwarmObject<Params> + Updateable + Clone + Syn
 
 #[derive(Clone)]
 pub struct Hysteresis(pub i32);
+
+
+#[derive(Clone)]
+pub enum NormallyOpen {
+    Open,
+    Closed,
+}
+
+impl Into<Argument> for NormallyOpen {
+    fn into(self) -> Argument {
+        match self {
+            NormallyOpen::Open => Argument::Int(0),
+            NormallyOpen::Closed => Argument::Int(1),
+        }
+    }
+}

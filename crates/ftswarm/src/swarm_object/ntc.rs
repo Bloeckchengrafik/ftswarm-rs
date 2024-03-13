@@ -5,7 +5,7 @@ use ftswarm_proto::command::enums::SensorType;
 use ftswarm_proto::command::rpc::RpcFunction;
 use ftswarm_proto::message_parser::rpc::RPCReturnParam;
 use crate::FtSwarm;
-use crate::swarm_object::{Hysteresis, NewSwarmObject, SwarmObject, Updateable};
+use crate::swarm_object::{Hysteresis, NewSwarmObject, NormallyOpen, SwarmObject, Updateable};
 
 #[derive(Clone)]
 pub struct Ntc {
@@ -34,7 +34,7 @@ impl NewSwarmObject<Hysteresis> for Ntc {
         async move {
             self.run_command(
                 RpcFunction::SetSensorType,
-                vec![Argument::SensorType(SensorType::Thermometer)]
+                vec![Argument::SensorType(SensorType::Thermometer), NormallyOpen::Open.into()]
             ).await.unwrap();
 
             self.run_command(

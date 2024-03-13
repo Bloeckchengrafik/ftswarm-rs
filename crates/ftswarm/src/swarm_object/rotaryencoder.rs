@@ -7,25 +7,27 @@ use ftswarm_proto::command::enums::SensorType;
 use ftswarm_proto::command::rpc::RpcFunction;
 use ftswarm_proto::message_parser::rpc::RPCReturnParam;
 use crate::FtSwarm;
-use crate::swarm_object::{NewSwarmObject, SwarmObject, Updateable};
+use crate::swarm_object::{NewSwarmObject, NormallyOpen, SwarmObject, Updateable};
 
 #[derive(Clone)]
 pub struct RotaryEncoder {
     pub name: String,
     pub value: i32,
+    normally_open: NormallyOpen,
     swarm: FtSwarm
 }
 
 impl_int_updateable!(RotaryEncoder);
-impl_swarm_object!(RotaryEncoder, ());
+impl_swarm_object!(RotaryEncoder, NormallyOpen);
 
-impl NewSwarmObject<()> for RotaryEncoder {
+impl NewSwarmObject<NormallyOpen> for RotaryEncoder {
     default_new_swarm_object_impls!();
 
-    fn new(name: &str, swarm: FtSwarm, _: ()) -> Box<Self> {
+    fn new(name: &str, swarm: FtSwarm, normally_open: NormallyOpen) -> Box<Self> {
         Box::new(RotaryEncoder {
             name: name.to_string(),
             value: 0,
+            normally_open,
             swarm
         })
     }
@@ -34,7 +36,7 @@ impl NewSwarmObject<()> for RotaryEncoder {
         async move {
             self.run_command(
                 RpcFunction::SetSensorType,
-                vec![Argument::SensorType(SensorType::RotaryEncoder)]
+                vec![Argument::SensorType(SensorType::RotaryEncoder), self.normally_open.clone().into()]
             ).await.unwrap();
 
             self.run_command(
