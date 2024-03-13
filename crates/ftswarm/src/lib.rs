@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use proto::message_parser::subscription::Subscription;
-use swarm_object::Updateable;
 use tokio::task::JoinHandle;
 use tokio::time::{Duration, sleep};
 use ftswarm_proto::command::direct::FtSwarmDirectCommand;
@@ -112,23 +111,25 @@ impl FtSwarm {
 
     async fn input_loop<Serial: SwarmSerialPort + 'static>(inner_ft_swarm: Arc<Mutex<InnerFtSwarm>>, mut serial_port: Serial) {
         loop {
-            { // Free lock as soon as possible
-                let mut inner = inner_ft_swarm.lock().unwrap();
-
-                // Handle inputs
-                if serial_port.available() {
-                    let line = serial_port.read_line().replace("\n", "").replace("\r", "");
-                    let response = S2RMessage::from(line);
+            if serial_port.available() {
+                let line = serial_port.read_line().replace("\n", "").replace("\r", "");
+                let response = S2RMessage::from(line);
+                {
+                    let mut inner = inner_ft_swarm.lock().unwrap();
                     if let S2RMessage::Subscription(subscription) = response {
                         if let Ok(subscription) = Subscription::try_from(subscription) {
                             if let Some(object) = inner.objects.get(&subscription.port_name) {
                                 object(subscription.value.clone());
                             }
-                        }   
+                        }
                     } else {
                         inner.message_queue.push(response);
                     }
                 }
+            }
+
+            {
+                let mut inner = inner_ft_swarm.lock().unwrap();
 
                 // Handle outputs
                 if let Some(data) = inner.write_queue.pop() {
@@ -136,86 +137,87 @@ impl FtSwarm {
                 }
             }
 
-            sleep(Duration::from_millis(5)).await; // Don't be a menace to society while waiting
+            sleep(Duration::from_millis(15)).await;
         }
     }
 
-    pub(crate) fn push_cache(&self, object: Box<dyn Fn(RPCReturnParam) + Send>, name: &str) {
+
+pub(crate) fn push_cache(&self, object: Box<dyn Fn(RPCReturnParam) + Send>, name: &str) {
+    let mut inner = self.inner.lock().unwrap();
+    inner.objects.insert(name.to_string(), object);
+}
+
+/// Low-level method to send a command to the ftSwarm. Only use this as a last resort
+pub fn send_command(&self, command: FtSwarmCommand) {
+    let mut inner = self.inner.lock().unwrap();
+    inner.write_queue.push(command);
+}
+
+/// Low-level method to receive a response to the ftSwarm. Only use this as a last resort
+pub async fn read_response(&self) -> Result<RPCReturnParam, String> {
+    let (handle, mut recv) = SenderHandle::create();
+    {
         let mut inner = self.inner.lock().unwrap();
-        inner.objects.insert(name.to_string(), object);
+        inner.message_queue.push_sender(&handle);
     }
 
-    /// Low-level method to send a command to the ftSwarm. Only use this as a last resort
-    pub fn send_command(&self, command: FtSwarmCommand) {
+    let response = recv.recv().await.unwrap();
+
+    {
         let mut inner = self.inner.lock().unwrap();
-        inner.write_queue.push(command);
+        inner.message_queue.drop_sender(&handle);
     }
 
-    /// Low-level method to receive a response to the ftSwarm. Only use this as a last resort
-    pub async fn read_response(&self) -> Result<RPCReturnParam, String> {
-        let (handle, mut recv) = SenderHandle::create();
-        {
-            let mut inner = self.inner.lock().unwrap();
-            inner.message_queue.push_sender(&handle);
-        }
+    match response {
+        S2RMessage::RPCResponse(data) => Ok(RPCReturnParam::from(data)),
+        S2RMessage::Error(data) => Err(data),
+        _ => Err("Received non-RPCResponse message".to_string()),
+    }
+}
 
-        let response = recv.recv().await.unwrap();
 
-        {
-            let mut inner = self.inner.lock().unwrap();
-            inner.message_queue.drop_sender(&handle);
-        }
+/// Low-level method to send a command to the ftSwarm and receive a response. Only use this as a last resort
+pub async fn transact(&self, command: FtSwarmCommand) -> Result<RPCReturnParam, String> {
+    // Subscribe commands don't return a response
+    let is_subscription = match &command {
+        FtSwarmCommand::RPC(cmd) => cmd.function == RpcFunction::Subscribe,
+        _ => false,
+    };
 
-        match response {
-            S2RMessage::RPCResponse(data) => Ok(RPCReturnParam::from(data)),
-            S2RMessage::Error(data) => Err(data),
-            _ => Err("Received non-RPCResponse message".to_string()),
-        }
+    self.send_command(command);
+
+    if is_subscription {
+        return Ok(RPCReturnParam::Ok);
     }
 
+    self.read_response().await
+}
 
-    /// Low-level method to send a command to the ftSwarm and receive a response. Only use this as a last resort
-    pub async fn transact(&self, command: FtSwarmCommand) -> Result<RPCReturnParam, String> {
-        // Subscribe commands don't return a response
-        let is_subscription = match &command {
-            FtSwarmCommand::RPC(cmd) => cmd.function == RpcFunction::Subscribe,
-            _ => false,
-        };
-
-        self.send_command(command);
-
-        if is_subscription {
-            return Ok(RPCReturnParam::Ok)
-        }
-
-        self.read_response().await
+/// Return the hostname, id, and serial number of the connected ftSwarm
+pub async fn whoami(&self) -> Result<WhoamiResponse, String> {
+    let response = self.transact(FtSwarmCommand::Direct(FtSwarmDirectCommand::Whoami)).await?;
+    if let RPCReturnParam::String(str) = response {
+        Ok(WhoamiResponse::try_from(str)?)
+    } else {
+        Err("Received non-string response".to_string())
     }
+}
 
-    /// Return the hostname, id, and serial number of the connected ftSwarm
-    pub async fn whoami(&self) -> Result<WhoamiResponse, String> {
-        let response = self.transact(FtSwarmCommand::Direct(FtSwarmDirectCommand::Whoami)).await?;
-        if let RPCReturnParam::String(str) = response {
-            Ok(WhoamiResponse::try_from(str)?)
-        } else {
-            Err("Received non-string response".to_string())
-        }
+/// Stop all connected motors and turn off all LEDs (except for RGB LEDs)
+pub fn halt(&self) {
+    self.send_command(FtSwarmCommand::Direct(FtSwarmDirectCommand::Halt));
+}
+
+/// Return the uptime of the connected ftSwarm (max precision: seconds)
+pub async fn uptime(&self) -> Result<Duration, String> {
+    let response = self.transact(FtSwarmCommand::Direct(FtSwarmDirectCommand::Uptime)).await?;
+
+    if let RPCReturnParam::String(str) = response {
+        Ok(parse_uptime(str)?)
+    } else {
+        Err("Received non-string response".to_string())
     }
-
-    /// Stop all connected motors and turn off all LEDs (except for RGB LEDs)
-    pub fn halt(&self) {
-        self.send_command(FtSwarmCommand::Direct(FtSwarmDirectCommand::Halt));
-    }
-
-    /// Return the uptime of the connected ftSwarm (max precision: seconds)
-    pub async fn uptime(&self) -> Result<Duration, String> {
-        let response = self.transact(FtSwarmCommand::Direct(FtSwarmDirectCommand::Uptime)).await?;
-
-        if let RPCReturnParam::String(str) = response {
-            Ok(parse_uptime(str)?)
-        } else {
-            Err("Received non-string response".to_string())
-        }
-    }
+}
 }
 
 impl Drop for FtSwarm {
