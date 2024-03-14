@@ -111,3 +111,23 @@ impl From<i32> for ToggleType {
         }
     }
 }
+
+pub enum MicroStepMode {
+    FullStep,
+    HalfStep,
+    QuarterStep,
+    EighthStep,
+    SixteenthStep,
+}
+
+impl IdOf for MicroStepMode {
+    fn id(&self) -> u32 {
+        match self {
+            MicroStepMode::FullStep => 0,
+            MicroStepMode::HalfStep => 1,
+            MicroStepMode::QuarterStep => 2,
+            MicroStepMode::EighthStep => 3,
+            MicroStepMode::SixteenthStep => 4,
+        }
+    }
+}

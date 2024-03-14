@@ -1,6 +1,6 @@
 use log::info;
-use ftswarm::{aliases, FtSwarm};
-use ftswarm::swarm_object::{Digital, NormallyOpen, SwarmObject};
+use tokio::sync::mpsc::channel;
+use ftswarm::prelude::*;
 
 
 aliases! {
@@ -17,27 +17,49 @@ async fn main() -> Result<(), String> {
         .filter_level(log::LevelFilter::Trace)
         .init();
 
+    let (send_color, mut recv_color) = channel(1);
+
+    tokio::spawn(async move {
+        // Coroutine that generates a rainbow when requested
+        let mut hue = 0;
+        loop {
+            send_color.send(hue).await.unwrap();
+            hue = (hue + 5) % 360;
+        }
+    });
+
     // Automatically connects to the first available ftSwarm
     let swarm = FtSwarm::default();
 
     let response = swarm.whoami().await?;
     info!("WhoAmI: {}", response);
 
+    info!("Halting motors");
     swarm.halt();
+
     info!("Uptime: {:?}", swarm.uptime().await?);
 
     let switch = Digital::create(&swarm, Aliases::SWITCH, NormallyOpen::Open).await;
+    let led1 = Led::create(&swarm, Aliases::LED1, ()).await;
+    let led2 = Led::create(&swarm, Aliases::LED2, ()).await;
 
-    let mut switch_state = false;
+    led1.lock().unwrap().set_color(LedColor::blue()).await.unwrap();
+    led2.lock().unwrap().set_color(LedColor::cyan()).await.unwrap();
+
+    let mut switch_state = switch.lock().unwrap().value;
     loop {
-        {
-            let switch = switch.lock().unwrap();
-            if switch_state != switch.value {
-                switch_state = switch.value;
-                info!("Switch state: {}", switch_state);
-            }
-        }
+        let value = switch.lock().unwrap().value;
 
+        if switch_state != value {
+            switch_state = value;
+            info!("Switch state: {}", switch_state);
+
+            let new_led_color = recv_color.recv().await.unwrap();
+            let color = LedColor::hsl(new_led_color, 100, 50);
+            led1.lock().unwrap().set_color(color.clone()).await.unwrap();
+            led2.lock().unwrap().set_color(color).await.unwrap();
+        }
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+
     }
 }

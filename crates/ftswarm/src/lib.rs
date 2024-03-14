@@ -19,6 +19,7 @@ use crate::direct::{parse_uptime, WhoamiResponse};
 mod message_queue;
 pub mod swarm_object;
 mod direct;
+pub mod prelude;
 
 #[cfg(test)]
 mod tests;

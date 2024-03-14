@@ -1,5 +1,5 @@
 use crate::{IdOf, Serialized};
-use crate::command::enums::{ActorType, MotionType, SensorType};
+use crate::command::enums::{ActorType, MicroStepMode, MotionType, SensorType};
 
 pub enum Argument {
     Int(i64),
@@ -7,7 +7,8 @@ pub enum Argument {
     Bool(bool),
     ActorType(ActorType),
     SensorType(SensorType),
-    MotionType(MotionType)
+    MotionType(MotionType),
+    MicroStepMode(MicroStepMode)
 }
 
 impl Serialized for Argument {
@@ -18,7 +19,8 @@ impl Serialized for Argument {
             Argument::Bool(b) => (if b.clone() { 1 } else { 0 }).to_string(),
             Argument::ActorType(a) => a.id().to_string(),
             Argument::SensorType(s) => s.id().to_string(),
-            Argument::MotionType(m) => m.id().to_string()
+            Argument::MotionType(m) => m.id().to_string(),
+            Argument::MicroStepMode(m) => m.id().to_string()
         }
     }
 }

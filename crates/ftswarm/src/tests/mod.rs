@@ -1,6 +1,6 @@
 use ftswarm_serial::FixedSerialPort;
 
-use crate::{aliases, swarm_object::{Io, Servo, SwarmObject}, FtSwarm};
+use crate::prelude::*;
 
 aliases! {
     Outputs {
@@ -51,27 +51,24 @@ async fn test_servo() {
         assert_eq!(servo.get_offset().await, Some(10));
 
         servo.set_offset(32).await.unwrap();
-        servo.set_position(32).await.unwrap_err();
+        assert_eq!(servo.set_position(32).await, None);
     }
 }
 
 #[tokio::test]
 async fn test_ntc() {
     let static_serial = FixedSerialPort::new();
+    static_serial.add_response("R: Ok");
     static_serial.add_response("R: 0");
     static_serial.add_response("R: 10");
     static_serial.add_response("R: Ok");
     static_serial.add_response(" ^ Port not found");
 
     let swarm = FtSwarm::new(static_serial);
-    let ntc: Io<Servo> = Servo::create(&swarm, "example", ()).await;
+    let ntc: Io<Thermometer> = Thermometer::create(&swarm, "example", Hysteresis(0)).await;
     
     {
-        let servo = ntc.lock().unwrap();
-        assert_eq!(servo.get_position().await, Some(0));
-        assert_eq!(servo.get_offset().await, Some(10));
-
-        servo.set_offset(32).await.unwrap();
-        servo.set_position(32).await.unwrap_err();
+        let ntc = ntc.lock().unwrap();
+        assert_eq!(ntc.value, 0);
     }
 }

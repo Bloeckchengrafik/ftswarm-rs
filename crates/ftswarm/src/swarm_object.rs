@@ -1,10 +1,7 @@
 use std::{future::Future, sync::{Arc, Mutex}};
 
-pub use analog::*;
-pub use digital::*;
 use ftswarm_macros::Updateable;
 use ftswarm_proto::{command::{argument::Argument, FtSwarmCommand, rpc::{FtSwarmRPCCommand, RpcFunction}}, message_parser::rpc::RPCReturnParam};
-pub use servo::Servo;
 
 use crate::FtSwarm;
 
@@ -12,7 +9,9 @@ pub mod analog;
 pub mod digital;
 
 pub mod servo;
-mod actor;
+pub mod actor;
+pub mod led;
+pub mod controller;
 
 pub type Io<T> = Arc<Mutex<Box<T>>>;
 

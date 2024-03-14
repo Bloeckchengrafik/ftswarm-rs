@@ -30,9 +30,9 @@ impl Servo {
             .and_then(|param| param.as_int())
     }
 
-    pub async fn set_position(&self, position: i32) -> Result<(), String> {
+    pub async fn set_position(&self, position: i32) -> Option<()> {
         self.run_command(RpcFunction::SetPosition, vec![Argument::Int(position as i64)])
-            .await
+            .await.ok()
             .map(|_| ())
     }
 
