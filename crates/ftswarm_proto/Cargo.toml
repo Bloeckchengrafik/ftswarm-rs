@@ -2,6 +2,14 @@
 name = "ftswarm_proto"
 version = "0.1.0"
 edition = "2021"
+description = "Protocol definitions for the ftswarm serial communication protocol"
+license = "MIT"
+repository = "https://github.com/Bloeckchengrafik/ftswarm-rs"
+readme = "../../README.md"
+keywords = ["ftswarm", "communication", "iot", "robotics"]
+categories = ["network-programming", "science::robotics"]
+
+publish = true
 
 [[example]]
 name = "proto_command"

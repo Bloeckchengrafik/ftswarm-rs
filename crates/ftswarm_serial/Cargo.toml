@@ -2,6 +2,14 @@
 name = "ftswarm_serial"
 version = "0.1.0"
 edition = "2021"
+description = "Unified serial api for the ftSwarm Rust API"
+license = "MIT"
+repository = "https://github.com/Bloeckchengrafik/ftswarm-rs"
+readme = "../../README.md"
+keywords = ["ftswarm", "communication", "iot", "robotics"]
+categories = ["network-programming", "science::robotics"]
+
+publish = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

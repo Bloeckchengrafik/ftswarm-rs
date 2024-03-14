@@ -3,11 +3,16 @@ name = "ftswarm"
 version = "0.1.0"
 edition = "2021"
 description = "A simple swarm protocol communication library"
+license = "MIT"
+repository = "https://github.com/Bloeckchengrafik/ftswarm-rs"
+readme = "../../README.md"
+keywords = ["ftswarm", "communication", "iot", "robotics"]
+categories = ["network-programming", "science::robotics"]
 
 [dependencies]
-ftswarm_proto = { path = "../ftswarm_proto" }
-ftswarm_serial = { path = "../ftswarm_serial" }
-ftswarm_macros = { path = "../ftswarm_macros" }
+ftswarm_proto = { path = "../ftswarm_proto", version = "0.1.0" }
+ftswarm_serial = { path = "../ftswarm_serial", version = "0.1.0" }
+ftswarm_macros = { path = "../ftswarm_macros", version = "0.1.0" }
 rand = "0.9.0-alpha.0"
 tokio.workspace = true
 log.workspace = true
