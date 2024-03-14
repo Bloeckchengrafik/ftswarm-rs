@@ -1,7 +1,6 @@
 use proc_macro::{TokenStream};
 use proc_macro2::Ident;
 use quote::quote;
-use syn::Token;
 
 struct AnalogSwarmObjectParsed {
     typename: Ident,

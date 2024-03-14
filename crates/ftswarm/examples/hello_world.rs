@@ -1,6 +1,6 @@
 use log::info;
 use ftswarm::{aliases, FtSwarm};
-use ftswarm::swarm_object::{Digital, NormallyOpen, SwarmObject, Switch};
+use ftswarm::swarm_object::{Digital, NormallyOpen, SwarmObject};
 
 
 aliases! {

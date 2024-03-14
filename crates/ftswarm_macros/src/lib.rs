@@ -1,5 +1,6 @@
 mod digital_swarm_objects;
 mod analog_swarm_objects;
+mod actor_swarm_objects;
 
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
@@ -8,6 +9,7 @@ use quote::quote;
 use syn::parse::Parse;
 
 use digital_swarm_objects::digital_swarm_object_impl;
+use crate::actor_swarm_objects::actor_swarm_object_impl;
 use crate::analog_swarm_objects::analog_swarm_object_impl;
 
 
@@ -17,10 +19,8 @@ pub fn updateable_derive(input: TokenStream) -> TokenStream {
     let ast: DeriveInput = syn::parse(input).unwrap();
     let name = &ast.ident;
     let gen = quote! {
-        use ftswarm_proto::message_parser::rpc::RPCReturnParam;
-
         impl Updateable for #name {
-            fn handle_subscription(&mut self, message: &RPCReturnParam) {
+            fn handle_subscription(&mut self, message: &ftswarm_proto::message_parser::rpc::RPCReturnParam) {
                 // No-op
             }
         }
@@ -122,4 +122,9 @@ pub fn digital_swarm_object(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn analog_swarm_object(input: TokenStream) -> TokenStream {
     analog_swarm_object_impl(input)
+}
+
+#[proc_macro]
+pub fn actor_swarm_object(input: TokenStream) -> TokenStream {
+    actor_swarm_object_impl(input)
 }

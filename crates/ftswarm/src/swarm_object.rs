@@ -12,6 +12,7 @@ pub mod analog;
 pub mod digital;
 
 pub mod servo;
+mod actor;
 
 pub type Io<T> = Arc<Mutex<Box<T>>>;
 
