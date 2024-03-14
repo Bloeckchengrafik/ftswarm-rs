@@ -37,7 +37,7 @@ If you're here, you're probably already familiar with Rust. If not, you can find
 
 ```toml
 [dependencies]
-ftswarm = { git = "https://github.com/Bloeckchengrafik/ftswarm-rs" }
+ftswarm = "0.1.0"
 ```
 
 To use it in your code, look at the examples in the [crates/ftswarm/examples](crates/ftswarm/examples) directory.
