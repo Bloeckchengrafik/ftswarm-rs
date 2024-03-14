@@ -25,27 +25,27 @@ impl NewSwarmObject<()> for Controller {
 }
 
 impl Controller {
-    pub async fn show(&self) -> Option<()> {
+    pub async fn show(&self) -> Result<(), String> {
         self.run_command(RpcFunction::Show, vec![])
-            .await.ok()
+            .await
             .map(|_| ())
     }
 
-    pub async fn set_micro_step_mode(&self, mode: MicroStepMode) -> Option<()> {
+    pub async fn set_micro_step_mode(&self, mode: MicroStepMode) -> Result<(), String> {
         self.run_command(RpcFunction::SetMicroStepMode, vec![Argument::MicroStepMode(mode)])
-            .await.ok()
+            .await
             .map(|_| ())
     }
 
-    pub async fn set_register(&self, register: u8, value: u32) -> Option<()> {
+    pub async fn set_register(&self, register: u8, value: u32) -> Result<(), String> {
         self.run_command(RpcFunction::SetRegister, vec![Argument::Int(register as i64), Argument::Int(value as i64)])
-            .await.ok()
+            .await
             .map(|_| ())
     }
 
-    pub async fn get_register(&self, register: u8) -> Option<u32> {
+    pub async fn get_register(&self, register: u8) -> Result<u32, String> {
         self.run_command(RpcFunction::GetRegister, vec![Argument::Int(register as i64)])
-            .await.ok()
-            .and_then(|response| response.as_int().map(|value| value as u32))
+            .await
+            .and_then(|response| response.as_int().map(|value| value as u32).ok_or("Invalid response".to_string()))
     }
 }

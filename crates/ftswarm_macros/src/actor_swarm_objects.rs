@@ -29,24 +29,24 @@ pub fn actor_swarm_object_impl(input: TokenStream) -> TokenStream {
     let impl_block = if digital {
         quote! {
             impl #typename {
-                pub async fn set(&self, value: ValueState) {
+                pub async fn set(&self, value: ValueState) -> Result<(), String> {
                     self.run_command(
                         RpcFunction::SetSpeed,
                         vec![Argument::Int(value.into())]
-                    ).await.unwrap();
+                    ).await.map(|_| ())
                 }
             }
         }
     } else {
         quote! {
             impl #typename {
-                pub async fn set(&self, value: i32) {
+                pub async fn set(&self, value: i32) -> Result<(), String> {
                     let value = value.max(-255).min(255);
 
                     self.run_command(
                         RpcFunction::SetPosition,
                         vec![Argument::Int(value as i64)]
-                    ).await.unwrap();
+                    ).await.map(|_| ())
                 }
             }
         }

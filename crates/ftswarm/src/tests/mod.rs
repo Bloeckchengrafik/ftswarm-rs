@@ -47,11 +47,11 @@ async fn test_servo() {
     
     {
         let servo = servo.lock().unwrap();
-        assert_eq!(servo.get_position().await, Some(0));
-        assert_eq!(servo.get_offset().await, Some(10));
+        assert_eq!(servo.get_position().await, Ok(0));
+        assert_eq!(servo.get_offset().await, Ok(10));
 
         servo.set_offset(32).await.unwrap();
-        assert_eq!(servo.set_position(32).await, None);
+        servo.set_position(32).await.unwrap_err();
     }
 }
 

@@ -27,12 +27,11 @@ pub fn digital_swarm_object_impl(input: TokenStream) -> TokenStream {
     let toggle_type = if has_toggle {
         quote! {
             impl #typename {
-                pub async fn get_toggle(&self) -> ToggleType {
+                pub async fn get_toggle(&self) -> Result<ToggleType, String> {
                     return self.run_command(RpcFunction::GetToggle, vec![])
-                        .await.ok()
-                        .and_then(|param| param.as_int())
-                        .and_then(|param| Some(ToggleType::from(param)))
-                        .unwrap_or(ToggleType::None);
+                        .await
+                        .and_then(|param| param.as_int().ok_or("Invalid toggle value".to_string()))
+                        .and_then(|param| Ok(ToggleType::from(param)))
                 }
             }
         }

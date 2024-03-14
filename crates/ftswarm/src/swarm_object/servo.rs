@@ -24,27 +24,27 @@ impl NewSwarmObject<()> for Servo {
 }
 
 impl Servo {
-    pub async fn get_position(&self) -> Option<i32> {
+    pub async fn get_position(&self) -> Result<i32, String> {
         self.run_command(RpcFunction::GetPosition, vec![])
-            .await.ok()
-            .and_then(|param| param.as_int())
+            .await
+            .and_then(|param| param.as_int().ok_or("Invalid response".to_string()))
     }
 
-    pub async fn set_position(&self, position: i32) -> Option<()> {
+    pub async fn set_position(&self, position: i32) -> Result<(), String> {
         self.run_command(RpcFunction::SetPosition, vec![Argument::Int(position as i64)])
-            .await.ok()
+            .await
             .map(|_| ())
     }
 
-    pub async fn get_offset(&self) -> Option<i32> {
+    pub async fn get_offset(&self) -> Result<i32, String> {
         self.run_command(RpcFunction::GetOffset, vec![])
-            .await.ok()
-            .and_then(|param| param.as_int())
+            .await
+            .and_then(|param| param.as_int().ok_or("Invalid response".to_string()))
     }
 
-    pub async fn set_offset(&self, offset: i32) -> Option<()> {
+    pub async fn set_offset(&self, offset: i32) -> Result<(), String> {
         self.run_command(RpcFunction::SetOffset, vec![Argument::Int(offset as i64)])
-            .await.ok()
+            .await
             .map(|_| ())
     }
 }
