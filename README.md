@@ -28,7 +28,7 @@ The project is in an early stage of development. The following features are alre
 - [x] Connect to the ftSwarm
 - [x] Send commands to the ftSwarm
 - [x] Receive data from the ftSwarm
-- [ ] Recover on errors
+- [x] Recover on errors
 
 ## Using ftswarm-rs
 
