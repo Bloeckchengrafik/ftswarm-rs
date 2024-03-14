@@ -14,7 +14,7 @@ aliases! {
 #[tokio::main]
 async fn main() -> Result<(), String> {
     env_logger::builder()
-        .filter_level(log::LevelFilter::Trace)
+        .filter_level(log::LevelFilter::Debug)
         .init();
 
     let (send_color, mut recv_color) = channel(1);

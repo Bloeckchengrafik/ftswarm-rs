@@ -1,6 +1,7 @@
 use serialport::SerialPort;
 use std::thread::sleep;
 use std::io::{Read, Write};
+use log::trace;
 use crate::SwarmSerialPort;
 
 pub struct SerialCommunication {
@@ -33,6 +34,8 @@ impl SerialCommunication {
             return Err("No serial ports found".to_string());
         }
 
+        trace!("Found serial ports: {:?}", ports);
+
         Ok(ports[0].port_name.clone())
     }
 }
@@ -59,15 +62,19 @@ impl SwarmSerialPort for SerialCommunication {
             }
             buffer.push(byte[0]);
         }
-        String::from_utf8(buffer).unwrap()
+        let str = String::from_utf8(buffer).unwrap();
+        trace!("S > R: {}", str);
+        str
     }
 
     fn write_line(&mut self, line: String) {
+        trace!("R > S: {}", line);
         self.port.write_all(line.as_bytes()).unwrap();
         self.port.write_all(b"\r\n").unwrap();
     }
 
     fn block_until(&mut self, line: String) {
+        trace!("Blocking until: {}", line);
         // Read until the line is found
         let mut line_pos = 0;
         loop {
@@ -96,5 +103,7 @@ impl SwarmSerialPort for SerialCommunication {
                 self.port.read_exact(&mut buf).unwrap();
             }
         }
+
+        trace!("Blocking until: {} - Done", line);
     }
 }
