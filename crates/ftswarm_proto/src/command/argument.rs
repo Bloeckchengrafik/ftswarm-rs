@@ -1,6 +1,7 @@
-use crate::{IdOf, Serialized};
+use crate::{Deserialized, IdOf, Serialized};
 use crate::command::enums::{ActorType, MicroStepMode, MotionType, SensorType};
 
+#[derive(Debug, Clone)]
 pub enum Argument {
     Int(i64),
     Float(f64),
@@ -22,5 +23,11 @@ impl Serialized for Argument {
             Argument::MotionType(m) => m.id().to_string(),
             Argument::MicroStepMode(m) => m.id().to_string()
         }
+    }
+}
+
+impl Deserialized for Argument {
+    fn deserialize(value: &String) -> Result<Self, String> where Self: Sized {
+        Ok(Argument::Int(value.parse::<i64>().map_err(|_| format!("Error parsing int at {}", value))?))
     }
 }

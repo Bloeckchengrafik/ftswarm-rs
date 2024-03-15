@@ -44,7 +44,7 @@ pub fn actor_swarm_object_impl(input: TokenStream) -> TokenStream {
                     let value = value.max(-255).min(255);
 
                     self.run_command(
-                        RpcFunction::SetPosition,
+                        RpcFunction::SetSpeed,
                         vec![Argument::Int(value as i64)]
                     ).await.map(|_| ())
                 }

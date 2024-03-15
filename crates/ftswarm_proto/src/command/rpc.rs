@@ -1,7 +1,9 @@
-use crate::{NameOf, Serialized};
+use crate::{Deserialized, NameOf, Serialized};
 use crate::command::argument::Argument;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
-#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, Clone, Copy, EnumIter)]
 pub enum RpcFunction {
     Show,
     TriggerUserEvent,
@@ -75,6 +77,19 @@ impl NameOf for RpcFunction {
     }
 }
 
+impl Deserialized for RpcFunction {
+    fn deserialize(value: &String) -> Result<Self, String> where Self: Sized {
+        for function in RpcFunction::iter() {
+            if function.name() == *value {
+                return Ok(function);
+            }
+        }
+
+        Err(format!("Unknown function: {}", value))
+    }
+}
+
+#[derive(Debug)]
 pub struct FtSwarmRPCCommand {
     pub target: String,
     pub function: RpcFunction,
@@ -95,5 +110,36 @@ impl Serialized for FtSwarmRPCCommand {
         serialized.push_str(")");
 
         serialized
+    }
+}
+
+impl Deserialized for FtSwarmRPCCommand {
+    fn deserialize(value: &String) -> Result<Self, String> where Self: Sized {
+        let mut parts = value.split(".");
+        let target = parts.next().ok_or("Can't find target")?.to_string();
+        let function_with_args = parts.next().ok_or("Can't find function")?.to_string();
+        let mut parts = function_with_args.split("(");
+        let function = parts.next().ok_or("Can't find function")?.to_string();
+        let args_str = parts.next().ok_or("Can't find args")?.to_string();
+        let args_str = args_str.trim_end_matches(")").to_string();
+
+        let function = RpcFunction::deserialize(&function)?;
+
+        let mut args = Vec::new();
+        for arg in args_str.split(",") {
+            let arg = arg.trim();
+
+            if arg.len() == 0 {
+                continue;
+            }
+
+            args.push(Argument::deserialize(&arg.to_string())?);
+        }
+
+        Ok(FtSwarmRPCCommand {
+            target,
+            function,
+            args,
+        })
     }
 }
