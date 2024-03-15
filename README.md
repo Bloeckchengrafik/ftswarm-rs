@@ -29,6 +29,12 @@ The project is in an early stage of development. The following features are alre
 - [x] Send commands to the ftSwarm
 - [x] Receive data from the ftSwarm
 - [x] Recover on errors
+- [x] Emulate the ftSwarm for testing purposes
+
+The following features are not yet implemented:
+- [ ] Implement joystick support
+- [ ] Implement stepper motor support
+- [ ] Implement I2C Subscriptions
 
 ## Using ftswarm-rs
 
@@ -42,6 +48,14 @@ ftswarm = "0.1.0"
 
 To use it in your code, look at the examples in the [crates/ftswarm/examples](crates/ftswarm/examples) directory.
 
+If you want to test with multiple ftSwarms, you can use the `ftswarm-emulator` crate. It provides a simple emulator
+that can be used to test your code without having a real ftSwarm. To use it, add it as a dependency to your
+`Cargo.toml`:
+
+```toml
+[dependencies]
+ftswarm_emulator = "0.1.0"
+```
 
 ## How can I contribute?
 
