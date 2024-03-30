@@ -48,7 +48,7 @@ ftswarm = "0.2.1"
 
 To use it in your code, look at the examples in the [crates/ftswarm/examples](crates/ftswarm/examples) directory.
 
-If you want to test with multiple ftSwarms, you can use the `ftswarm-emulator` crate. It provides a simple emulator
+If you want to test without an actual ftSwarm, you can use the `ftswarm-emulator` crate. It provides a simple emulator
 that can be used to test your code without having a real ftSwarm. To use it, add it as a dependency to your
 `Cargo.toml`:
 
