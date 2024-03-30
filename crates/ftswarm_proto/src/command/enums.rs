@@ -1,6 +1,6 @@
 use crate::IdOf;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SensorType {
     Digital,
     Analog,
@@ -43,7 +43,7 @@ impl IdOf for SensorType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActorType {
     Motor,
     XMMotor,
@@ -72,7 +72,7 @@ impl IdOf for ActorType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MotionType {
     Coast,
     Brake,
@@ -89,7 +89,7 @@ impl IdOf for MotionType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToggleType {
     None,
     Up,
@@ -116,7 +116,7 @@ impl From<i32> for ToggleType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MicroStepMode {
     FullStep,
     HalfStep,
