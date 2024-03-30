@@ -1,6 +1,6 @@
 [package]
 name = "ftswarm"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "A simple swarm protocol communication library"
 license = "MIT"
@@ -10,9 +10,9 @@ keywords = ["ftswarm", "communication", "iot", "robotics"]
 categories = ["network-programming", "science::robotics"]
 
 [dependencies]
-ftswarm_proto = { path = "../ftswarm_proto", version = "0.2.0" }
-ftswarm_serial = { path = "../ftswarm_serial", version = "0.2.0" }
-ftswarm_macros = { path = "../ftswarm_macros", version = "0.2.0" }
+ftswarm_proto = { path = "../ftswarm_proto", version = "0.2.1" }
+ftswarm_serial = { path = "../ftswarm_serial", version = "0.2.1" }
+ftswarm_macros = { path = "../ftswarm_macros", version = "0.2.1" }
 rand = "0.9.0-alpha.0"
 tokio.workspace = true
 log.workspace = true
