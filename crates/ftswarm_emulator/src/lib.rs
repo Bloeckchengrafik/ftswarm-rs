@@ -20,7 +20,7 @@ impl EmulatedSerialPort {
             FtSwarmDirectCommand::Halt => {}
             FtSwarmDirectCommand::Whoami => {self.0.push_back("ftSwarm100/kelda".to_string()); }
             FtSwarmDirectCommand::Uptime => { self.0.push_back("uptime: 31.000 s".to_string()); }
-            FtSwarmDirectCommand::StartCli => { self.0.push_back("@@@ ftSwarmOS CLI started".to_string()); }
+            FtSwarmDirectCommand::StartCli => {}
         }
     }
 
