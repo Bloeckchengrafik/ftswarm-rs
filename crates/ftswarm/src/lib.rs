@@ -172,7 +172,7 @@ pub async fn read_response(&self) -> Result<RPCReturnParam, String> {
     match response {
         S2RMessage::RPCResponse(data) => Ok(RPCReturnParam::from(data)),
         S2RMessage::Error(data) => Err(data),
-        _ => Err("Received non-RPCResponse message".to_string()),
+        any => Err(format!("Received non-RPCResponse message, {:?}", any).to_string()),
     }
 }
 
