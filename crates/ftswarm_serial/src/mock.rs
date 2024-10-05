@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use crate::SwarmSerialPort;
+use crate::{SerialError, SwarmSerialPort};
 
 pub struct FixedSerialPort {
     commands: Mutex<Vec<String>>,
@@ -36,26 +36,29 @@ impl FixedSerialPort {
 }
 
 impl SwarmSerialPort for FixedSerialPort {
-    fn available(&self) -> bool {
+    fn available(&self) -> Result<bool, SerialError> {
         if self.is_initialized() {
-            let commands = self.commands.lock().unwrap();
-            !commands.is_empty()
+            let commands = self.commands.lock().map_err(|_| SerialError::Other("Mutex error".to_string()))?;
+            Ok(!commands.is_empty())
         } else {
-            false
+            Ok(false)
         }
     }
 
-    fn read_line(&mut self) -> String {
-        let command = self.pop_command().unwrap();
-        command
+    fn read_line(&mut self) -> Result<String, SerialError> {
+        let command = self.pop_command().ok_or(SerialError::Timeout)?;
+        Ok(command)
     }
 
-    fn write_line(&mut self, line: String) {
-        log::debug!("mock write line: {}", line)
+    fn write_line(&mut self, line: String) -> Result<(), SerialError> {
+        log::debug!("mock write line: {}", line);
+        Ok(())
     }
 
-    fn block_until(&mut self, line: String) {
+    fn block_until(&mut self, line: String) -> Result<(), SerialError> {
         log::debug!("mock block until: {}", line);
         self.initialize();
+
+        Ok(())
     }
 }

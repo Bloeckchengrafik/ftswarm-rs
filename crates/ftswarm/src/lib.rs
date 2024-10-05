@@ -96,8 +96,8 @@ impl FtSwarm {
         let inner_for_thread = inner.clone();
         // Startup swarm serial mode
 
-        serial.write_line(FtSwarmCommand::Direct(FtSwarmDirectCommand::StartCli).serialize());
-        serial.block_until("@@@".to_string());
+        serial.write_line(FtSwarmCommand::Direct(FtSwarmDirectCommand::StartCli).serialize()).expect("Write line failure");
+        serial.block_until("@@@".to_string()).expect("Block until failure");
 
         let handle = tokio::spawn(async move {
             FtSwarm::input_loop(inner_for_thread, serial).await;
@@ -112,8 +112,8 @@ impl FtSwarm {
 
     async fn input_loop<Serial: SwarmSerialPort + 'static>(inner_ft_swarm: Arc<Mutex<InnerFtSwarm>>, mut serial_port: Serial) {
         loop {
-            if serial_port.available() {
-                let line = serial_port.read_line().replace("\n", "").replace("\r", "");
+            if serial_port.available().expect("Available check failure") {
+                let line = serial_port.read_line().expect("Readline failure").replace("\n", "").replace("\r", "");
                 let response = S2RMessage::from(line);
                 {
                     let mut inner = inner_ft_swarm.lock().unwrap();
@@ -134,7 +134,7 @@ impl FtSwarm {
 
                 // Handle outputs
                 if let Some(data) = inner.write_queue.pop() {
-                    serial_port.write_line(data);
+                    serial_port.write_line(data).expect("Write line failure");
                 }
             }
 

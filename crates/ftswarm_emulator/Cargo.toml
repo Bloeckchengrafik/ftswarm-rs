@@ -1,6 +1,6 @@
 [package]
 name = "ftswarm_emulator"
-version = "0.2.3"
+version = "0.2.6"
 edition = "2021"
 description = "Procedural macros for the ftswarm crate"
 license = "MIT"
@@ -12,16 +12,12 @@ categories = ["network-programming", "science::robotics"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ftswarm_serial = { path = "../ftswarm_serial", version = "0.2.2" }
-ftswarm_proto = { path = "../ftswarm_proto", version = "0.2.2" }
+ftswarm_serial = { path = "../ftswarm_serial", version = "0.2.3" }
+ftswarm_proto = { path = "../ftswarm_proto", version = "0.2.3" }
 log.workspace = true
 
 
 [dev-dependencies]
-ftswarm = { path = "../ftswarm", version = "0.2.2" }
+ftswarm = { path = "../ftswarm", version = "0.2.3" }
 tokio.workspace = true
 env_logger = "0.11.3"
-
-[[example]]
-name = "emulator"
-path = "examples/emulator.rs"
