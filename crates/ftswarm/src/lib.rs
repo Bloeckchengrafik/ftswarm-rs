@@ -1,5 +1,12 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+
+#[cfg(not(feature = "tokio_mutex"))]
+use std::sync::Mutex as StdMutex;
+
+#[cfg(feature = "tokio_mutex")]
+use tokio::sync::Mutex as TokioMutex;
+
 use proto::message_parser::subscription::Subscription;
 use tokio::task::JoinHandle;
 use tokio::time::{Duration, sleep};
@@ -24,6 +31,22 @@ pub mod prelude;
 #[cfg(test)]
 mod tests;
 
+// Set mutex type based on the feature flag
+#[cfg(feature = "tokio_mutex")]
+pub type Mutex<T> = TokioMutex<T>;
+#[cfg(not(feature = "tokio_mutex"))]
+pub type Mutex<T> = StdMutex<T>;
+
+#[cfg(feature = "tokio_mutex")]
+async fn lock<T>(mutex: &Mutex<T>) -> tokio::sync::MutexGuard<T> {
+    mutex.lock().await
+}
+
+#[cfg(not(feature = "tokio_mutex"))]
+async fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<T> {
+    mutex.lock().unwrap()
+}
+
 /// A macro to create a struct with static string aliases
 ///
 /// # Example
@@ -39,9 +62,7 @@ mod tests;
 ///     }
 /// }
 ///
-/// fn main() {
-///    println!("Switch alias: {}", Aliases::SWITCH);
-/// }
+/// println!("Switch alias: {}", Aliases::SWITCH);
 /// ```
 ///
 /// This is useful for creating type-safe alias names for ftSwarm objects
@@ -101,7 +122,6 @@ impl FtSwarm {
 
         let handle = tokio::spawn(async move {
             FtSwarm::input_loop(inner_for_thread, serial).await;
-            ()
         });
 
         FtSwarm {
@@ -116,7 +136,7 @@ impl FtSwarm {
                 let line = serial_port.read_line().expect("Readline failure").replace("\n", "").replace("\r", "");
                 let response = S2RMessage::from(line);
                 {
-                    let mut inner = inner_ft_swarm.lock().unwrap();
+                    let mut inner = lock(&inner_ft_swarm).await;
                     if let S2RMessage::Subscription(subscription) = response {
                         if let Ok(subscription) = Subscription::try_from(subscription) {
                             if let Some(object) = inner.objects.get(&subscription.port_name) {
@@ -130,7 +150,7 @@ impl FtSwarm {
             }
 
             {
-                let mut inner = inner_ft_swarm.lock().unwrap();
+                let mut inner = lock(&inner_ft_swarm).await;
 
                 // Handle outputs
                 if let Some(data) = inner.write_queue.pop() {
@@ -143,14 +163,14 @@ impl FtSwarm {
     }
 
 
-pub(crate) fn push_cache(&self, object: Box<dyn Fn(RPCReturnParam) + Send>, name: &str) {
-    let mut inner = self.inner.lock().unwrap();
+pub(crate) async fn push_cache(&self, object: Box<dyn Fn(RPCReturnParam) + Send>, name: &str) {
+    let mut inner = lock(&self.inner).await;
     inner.objects.insert(name.to_string(), object);
 }
 
 /// Low-level method to send a command to the ftSwarm. Only use this as a last resort
-pub fn send_command(&self, command: FtSwarmCommand) {
-    let mut inner = self.inner.lock().unwrap();
+pub async fn send_command(&self, command: FtSwarmCommand) {
+    let mut inner = lock(&self.inner).await;
     inner.write_queue.push(command);
 }
 
@@ -158,14 +178,14 @@ pub fn send_command(&self, command: FtSwarmCommand) {
 pub async fn read_response(&self) -> Result<RPCReturnParam, String> {
     let (handle, mut recv) = SenderHandle::create();
     {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = lock(&self.inner).await;
         inner.message_queue.push_sender(&handle);
     }
 
     let response = recv.recv().await.unwrap();
 
     {
-        let mut inner = self.inner.lock().unwrap();
+        let mut inner = lock(&self.inner).await;
         inner.message_queue.drop_sender(&handle);
     }
 
@@ -185,7 +205,7 @@ pub async fn transact(&self, command: FtSwarmCommand) -> Result<RPCReturnParam, 
         _ => false,
     };
 
-    self.send_command(command);
+    self.send_command(command).await;
 
     if is_subscription {
         return Ok(RPCReturnParam::Ok);
@@ -205,8 +225,8 @@ pub async fn whoami(&self) -> Result<WhoamiResponse, String> {
 }
 
 /// Stop all connected motors and turn off all LEDs (except for RGB LEDs)
-pub fn halt(&self) {
-    self.send_command(FtSwarmCommand::Direct(FtSwarmDirectCommand::Halt));
+pub async fn halt(&self) {
+    self.send_command(FtSwarmCommand::Direct(FtSwarmDirectCommand::Halt)).await;
 }
 
 /// Return the uptime of the connected ftSwarm (max precision: seconds)

@@ -8,6 +8,12 @@ use ftswarm_serial::{SerialError, SwarmSerialPort};
 
 pub struct EmulatedSerialPort(VecDeque<String>);
 
+impl Default for EmulatedSerialPort {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EmulatedSerialPort {
     pub fn new() -> EmulatedSerialPort {
         EmulatedSerialPort(VecDeque::new())
@@ -25,8 +31,7 @@ impl EmulatedSerialPort {
     }
 
     fn handle_rpc_command(&mut self, command: FtSwarmRPCCommand) {
-        let functions_to_ok = vec![
-            RpcFunction::Show,
+        let functions_to_ok = [RpcFunction::Show,
             RpcFunction::TriggerUserEvent,
             RpcFunction::SetMicroStepMode,
             RpcFunction::SetSensorType,
@@ -38,8 +43,7 @@ impl EmulatedSerialPort {
             RpcFunction::SetOffset,
             RpcFunction::SetColor,
             RpcFunction::SetBrightness,
-            RpcFunction::SetRegister,
-        ];
+            RpcFunction::SetRegister];
 
         std::thread::sleep(std::time::Duration::from_millis(10));
         match command.function {
@@ -55,13 +59,6 @@ impl EmulatedSerialPort {
             }
         }
     }
-
-    fn handle_command(&mut self, command: FtSwarmCommand) {
-        match command {
-            FtSwarmCommand::RPC(command) => { self.handle_rpc_command(command); }
-            FtSwarmCommand::Direct(command) => { self.handle_direct_command(command); }
-        }
-    }
 }
 
 impl SwarmSerialPort for EmulatedSerialPort {
@@ -70,7 +67,7 @@ impl SwarmSerialPort for EmulatedSerialPort {
     }
 
     fn read_line(&mut self) -> Result<String, SerialError> {
-        Ok(self.0.pop_front().ok_or(SerialError::Timeout)?)
+        self.0.pop_front().ok_or(SerialError::Timeout)
     }
 
     fn write_line(&mut self, line: String) -> Result<(), SerialError> {
@@ -88,7 +85,7 @@ impl SwarmSerialPort for EmulatedSerialPort {
         Ok(())
     }
 
-    fn block_until(&mut self, line: String) -> Result<(), SerialError> {
+    fn block_until(&mut self, _: String) -> Result<(), SerialError> {
         info!("Emulator has started");
         Ok(())
     }

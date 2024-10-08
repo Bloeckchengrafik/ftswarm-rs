@@ -1,9 +1,9 @@
-use std::{future::Future, sync::{Arc, Mutex}};
+use std::{future::Future, sync::Arc};
 
 use ftswarm_macros::Updateable;
-use ftswarm_proto::{command::{argument::Argument, FtSwarmCommand, rpc::{FtSwarmRPCCommand, RpcFunction}}, message_parser::rpc::RPCReturnParam};
+use ftswarm_proto::{command::{argument::Argument, rpc::{FtSwarmRPCCommand, RpcFunction}, FtSwarmCommand}, message_parser::rpc::RPCReturnParam};
 
-use crate::FtSwarm;
+use crate::{lock, FtSwarm, Mutex};
 
 pub mod analog;
 pub mod digital;
@@ -12,6 +12,7 @@ pub mod servo;
 pub mod actor;
 pub mod led;
 pub mod controller;
+
 
 pub type Io<T> = Arc<Mutex<Box<T>>>;
 
@@ -29,17 +30,24 @@ pub trait NewSwarmObject<Params> {
 }
 
 pub trait SwarmObject<Params>: NewSwarmObject<Params> + Updateable + Clone + Sync + Send {
-    fn create(swarm: &FtSwarm, name: &str, params: Params) -> impl Future<Output=Io<Self>> where Self: 'static {
+    fn create(swarm: &FtSwarm, name: &str, params: Params) -> impl Future<Output=Io<Self>>
+    where
+        Self: 'static,
+    {
         let obj = Self::new(name, swarm.clone(), params);
         let arc = Arc::new(Mutex::new(obj));
         let for_closure = arc.clone();
-        swarm.push_cache(Box::new(move |subscription| {
-            let mut obj = for_closure.lock().unwrap();
-            obj.handle_subscription(&subscription);
-        }), name);
+
         async move {
+            swarm.push_cache(Box::new(move |subscription| {
+                let for_task = for_closure.clone();
+                tokio::spawn(async move {
+                    let mut obj = lock(&for_task).await;
+                    obj.handle_subscription(&subscription);
+                });
+            }), name).await;
             {
-                let mut obj = arc.lock().unwrap();
+                let mut obj = lock(&arc).await;
                 obj.init().await;
             }
             arc
@@ -53,7 +61,7 @@ pub trait SwarmObject<Params>: NewSwarmObject<Params> + Updateable + Clone + Syn
             args,
         };
 
-        return self.swarm().transact(FtSwarmCommand::RPC(command));
+        self.swarm().transact(FtSwarmCommand::RPC(command))
     }
 }
 

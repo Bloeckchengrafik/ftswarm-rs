@@ -6,6 +6,12 @@ pub struct FixedSerialPort {
     initialized: Mutex<bool>,
 }
 
+impl Default for FixedSerialPort {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FixedSerialPort {
     pub fn new() -> Self {
         FixedSerialPort {

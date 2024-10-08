@@ -152,7 +152,7 @@ impl Led {
     }
 
     pub async fn set_brightness(&self, brightness: i32) -> Result<(), String> {
-        let brightness = brightness.max(255).min(0);
+        let brightness = brightness.min(255).max(0);
         self.run_command(RpcFunction::SetBrightness, vec![Argument::Int(brightness as i64)]).await
         .map(|_| ())
     }

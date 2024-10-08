@@ -24,9 +24,9 @@ impl From<bool> for ValueState {
     }
 }
 
-impl Into<i64> for ValueState {
-    fn into(self) -> i64 {
-        match self {
+impl From<ValueState> for i64 {
+    fn from(value: ValueState) -> Self {
+        match value {
             ValueState::High => 255,
             ValueState::Reverse => -255,
             ValueState::Low => 0,

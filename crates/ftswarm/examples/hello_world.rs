@@ -35,7 +35,7 @@ async fn main() -> Result<(), String> {
     info!("WhoAmI: {}", response);
 
     info!("Halting motors");
-    swarm.halt();
+    swarm.halt().await;
 
     info!("Uptime: {:?}", swarm.uptime().await?);
 
@@ -43,12 +43,12 @@ async fn main() -> Result<(), String> {
     let led1 = Led::create(&swarm, Aliases::LED1, ()).await;
     let led2 = Led::create(&swarm, Aliases::LED2, ()).await;
 
-    led1.lock().unwrap().set_color(LedColor::blue()).await.unwrap();
-    led2.lock().unwrap().set_color(LedColor::cyan()).await.unwrap();
+    led1.lock().await.set_color(LedColor::blue()).await?;
+    led2.lock().await.set_color(LedColor::cyan()).await?;
 
-    let mut switch_state = switch.lock().unwrap().value;
+    let mut switch_state = switch.lock().await.value;
     loop {
-        let value = switch.lock().unwrap().value;
+        let value = switch.lock().await.value;
 
         if switch_state != value {
             switch_state = value;
@@ -56,8 +56,8 @@ async fn main() -> Result<(), String> {
 
             let new_led_color = recv_color.recv().await.unwrap();
             let color = LedColor::hsl(new_led_color, 100, 50);
-            led1.lock().unwrap().set_color(color.clone()).await.unwrap();
-            led2.lock().unwrap().set_color(color).await.unwrap();
+            led1.lock().await.set_color(color.clone()).await?;
+            led2.lock().await.set_color(color).await?;
         }
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
 

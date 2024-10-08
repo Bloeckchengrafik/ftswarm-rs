@@ -162,7 +162,7 @@ dependencies = [
 
 [[package]]
 name = "ftswarm"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "env_logger",
  "ftswarm_macros",
@@ -175,7 +175,7 @@ dependencies = [
 
 [[package]]
 name = "ftswarm_emulator"
-version = "0.2.6"
+version = "0.2.7"
 dependencies = [
  "env_logger",
  "ftswarm",
@@ -187,7 +187,7 @@ dependencies = [
 
 [[package]]
 name = "ftswarm_macros"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -196,7 +196,7 @@ dependencies = [
 
 [[package]]
 name = "ftswarm_proto"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "strum",
  "strum_macros",
@@ -204,7 +204,7 @@ dependencies = [
 
 [[package]]
 name = "ftswarm_serial"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "log",
  "serialport",

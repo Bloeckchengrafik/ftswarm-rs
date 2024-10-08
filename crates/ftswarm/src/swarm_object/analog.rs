@@ -19,27 +19,27 @@ analog_swarm_object!(Voltmeter);
 
 impl Thermometer {
     pub async fn get_kelvin(&self) -> Result<f32, String> {
-        return self.run_command(RpcFunction::GetKelvin, vec![])
+        self.run_command(RpcFunction::GetKelvin, vec![])
             .await
-            .and_then(|param| param.as_float().ok_or("Failed to get kelvin".to_string()));
+            .and_then(|param| param.as_float().ok_or("Failed to get kelvin".to_string()))
     }
 
     pub async fn get_celsius(&self) -> Result<f32, String> {
-        return self.run_command(RpcFunction::GetCelsius, vec![])
+        self.run_command(RpcFunction::GetCelsius, vec![])
             .await
-            .and_then(|param| param.as_float().ok_or("Failed to get celsius".to_string()));
+            .and_then(|param| param.as_float().ok_or("Failed to get celsius".to_string()))
     }
 
     pub async fn get_fahrenheit(&self) -> Result<f32, String> {
-        return self.run_command(RpcFunction::GetFahrenheit, vec![])
+        self.run_command(RpcFunction::GetFahrenheit, vec![])
             .await
-            .and_then(|param| param.as_float().ok_or("Failed to get fahrenheit".to_string()));
+            .and_then(|param| param.as_float().ok_or("Failed to get fahrenheit".to_string()))
     }
 }
 
 impl Ohmmeter {
     pub async fn get_resistance(&self) -> Result<f32, String> {
-        return self.run_command(RpcFunction::GetResistance, vec![])
+        self.run_command(RpcFunction::GetResistance, vec![])
             .await
             .and_then(|param| param.as_float().ok_or("Failed to get resistance".to_string()))
     }
@@ -47,7 +47,7 @@ impl Ohmmeter {
 
 impl Voltmeter {
     pub async fn get_voltage(&self) -> Result<f32, String> {
-        return self.run_command(RpcFunction::GetVoltage, vec![])
+        self.run_command(RpcFunction::GetVoltage, vec![])
             .await
             .and_then(|param| param.as_float().ok_or("Failed to get voltage".to_string()))
     }
