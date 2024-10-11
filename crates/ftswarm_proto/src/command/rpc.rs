@@ -3,7 +3,7 @@ use crate::command::argument::Argument;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, Clone, Copy, EnumIter)]
+#[derive(Debug, Eq, PartialEq, PartialOrd, Ord, Clone, EnumIter)]
 pub enum RpcFunction {
     Show,
     TriggerUserEvent,
@@ -37,6 +37,7 @@ pub enum RpcFunction {
     GetBrightness,
     SetRegister,
     GetRegister,
+    Custom(String),
 }
 impl NameOf for RpcFunction {
     fn name(&self) -> String {
@@ -73,6 +74,7 @@ impl NameOf for RpcFunction {
             RpcFunction::GetBrightness => "getBrightness".to_string(),
             RpcFunction::SetRegister => "setRegister".to_string(),
             RpcFunction::GetRegister => "getRegister".to_string(),
+            RpcFunction::Custom(name) => name.clone(),
         }
     }
 }
@@ -107,7 +109,7 @@ impl Serialized for FtSwarmRPCCommand {
             serialized.push_str(&arg.serialize());
         }
 
-        serialized.push_str(")");
+        serialized.push(')');
 
         serialized
     }
@@ -129,7 +131,7 @@ impl Deserialized for FtSwarmRPCCommand {
         for arg in args_str.split(",") {
             let arg = arg.trim();
 
-            if arg.len() == 0 {
+            if arg.is_empty() {
                 continue;
             }
 

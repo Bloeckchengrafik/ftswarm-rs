@@ -43,7 +43,7 @@ If you're here, you're probably already familiar with Rust. If not, you can find
 
 ```toml
 [dependencies]
-ftswarm = "0.2.4"
+ftswarm = "0.2.5"
 ```
 
 To use it in your code, look at the examples in the [crates/ftswarm/examples](crates/ftswarm/examples) directory.
@@ -54,7 +54,7 @@ that can be used to test your code without having a real ftSwarm. To use it, add
 
 ```toml
 [dependencies]
-ftswarm_emulator = "0.2.4"
+ftswarm_emulator = "0.2.5"
 ```
 
 ## How can I contribute?

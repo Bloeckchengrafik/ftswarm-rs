@@ -1,6 +1,6 @@
 [package]
 name = "ftswarm"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 description = "A simple swarm protocol communication library"
 license = "MIT"
@@ -13,9 +13,9 @@ categories = ["network-programming", "science::robotics"]
 tokio_mutex = []
 
 [dependencies]
-ftswarm_proto = { path = "../ftswarm_proto", version = "0.2.4" }
-ftswarm_serial = { path = "../ftswarm_serial", version = "0.2.4" }
-ftswarm_macros = { path = "../ftswarm_macros", version = "0.2.4" }
+ftswarm_proto = { path = "../ftswarm_proto", version = "0.2.5" }
+ftswarm_serial = { path = "../ftswarm_serial", version = "0.2.5" }
+ftswarm_macros = { path = "../ftswarm_macros", version = "0.2.5" }
 rand = "0.9.0-alpha.0"
 tokio.workspace = true
 log.workspace = true

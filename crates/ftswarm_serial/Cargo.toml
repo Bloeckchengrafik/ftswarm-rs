@@ -1,6 +1,6 @@
 [package]
 name = "ftswarm_serial"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 description = "Unified serial api for the ftSwarm Rust API"
 license = "MIT"
